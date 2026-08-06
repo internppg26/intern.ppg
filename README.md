@@ -1,6 +1,6 @@
 # intern.ppg
 
-[Deskripsi singkat mengenai proyek yang sedang dikembangkan.]
+Project PKL (Praktik Kerja Lapangan) di PT. Performa Puncak Group berupa Website yang berfokus mengenai Company Profile dan LMS (Learning Management System).
 
 ---
 
