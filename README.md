@@ -7,7 +7,9 @@
 ## 👥 Tim & Peran
 
 | Nama | Peran |
-| :--- | :--- |
+| 1. Pandu Panatagama Ariyadi Putra | Project Manager & UI/UX Designer |
+| 2. M. Rizqi Fahruddien | Frontend Developer |
+| 3. Nauval Rusdi Aslam | Backend Developer |
 
 
 ---
