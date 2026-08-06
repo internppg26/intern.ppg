@@ -54,6 +54,7 @@ INTERN.PPG/
 
 ## 3. Clean Architecture — Backend (`backend/`)
 
+```text
 Pendekatan modular NestJS (Controller → Service → Repository). Logika bisnis wajib terisolasi, dengan *Guards* global untuk memvalidasi JWT dan *Role* pada setiap *endpoint*.
 
 ### 3a. Peta Modul API
