@@ -16,9 +16,10 @@
 
 ## 🚀 Fitur Utama
 
-- [ ] Fitur 1
-- [ ] Fitur 2
-- [ ] Fitur 3
+- [ ] Company Profile
+- [ ] LMS
+- [ ] Super Admin
+- [ ] Instructor
 
 ---
 
