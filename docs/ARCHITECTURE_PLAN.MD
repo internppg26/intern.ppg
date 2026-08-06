@@ -49,6 +49,7 @@ INTERN.PPG/
 ├── frontend/               # Next.js — Company profile, Student Portal, Instructor Portal, Admin CMS
 ├── .gitignore              # Konfigurasi abaikan file dari pelacakan git
 └── README.md               # Dokumentasi awal repositori (Cara instalasi & menjalankan proyek)
+```
 
 ---
 
@@ -87,11 +88,11 @@ src/app/
 ├── (instructor)/      # Dashboard Instruktur, Jadwal Sesi (Google Calendar API), Grading Form
 ├── (admin)/           # Master Data CMS, Verifikasi Pembayaran, Manajemen Pengguna
 └── api/               # Next.js API routes (jika butuh BFF/BFF layer)
+```
 
 ---
 
-## 5. Struktur Backend (`backend/`)
-# Struktur Direktori Backend (NestJS + Prisma)
+## 5. Struktur Backend (NestJS + Prisma)
 
 Struktur ini menggunakan pendekatan **Domain-Driven Design (DDD)** ringan yang direkomendasikan oleh NestJS. Setiap fitur bisnis diisolasi ke dalam modulnya masing-masing.
 
@@ -129,6 +130,7 @@ INTERN.PPG/backend/
 ├── nest-cli.json                   # Konfigurasi build NestJS
 ├── package.json                    # Daftar dependencies backend
 └── tsconfig.json                   # Konfigurasi aturan TypeScript backend
+```
 
 ---
 
