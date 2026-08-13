@@ -1,53 +1,54 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 const blogPosts = [
   {
+    slug: 'navigating-exponential-growth',
     tag: 'STRATEGY',
     date: 'OCT 12, 2024',
     title: 'NAVIGATING EXPONENTIAL GROWTH FOR TECH STARTUPS',
     description: 'The landscape for early-stage companies is shifting. We explore how to maintain culture during rapid expansion phases.',
-    link: '#',
     linkText: 'READ MORE'
   },
   {
+    slug: 'upcoming-executive-leadership',
     tag: 'EDUCATION',
     date: 'OCT 08, 2024',
     title: 'UPCOMING EXECUTIVE LEADERSHIP WORKSHOP',
     description: 'Join our network of elite professionals for a three-day intensive on disruptive leadership in the digital era.',
-    link: '#',
     linkText: 'REGISTER NOW'
   },
   {
+    slug: 'building-sustainable-tech',
     tag: 'INSIGHTS',
     date: 'SEP 28, 2024',
     title: 'BUILDING SUSTAINABLE TECH ECOSYSTEMS',
     description: 'Sustainability is no longer optional. How modern corporations are integrating ESG into their core tech stack.',
-    link: '#',
     linkText: 'READ MORE'
   },
   {
+    slug: 'future-of-hybrid-collaboration',
     tag: 'WORK',
     date: 'SEP 15, 2024',
     title: 'THE FUTURE OF HYBRID COLLABORATION',
     description: 'New tools and methodologies for keeping distributed teams engaged and productive in 2025.',
-    link: '#',
     linkText: 'READ MORE'
   },
   {
+    slug: 'q3-platform-maintenance',
     tag: 'UPDATES',
     date: 'SEP 02, 2024',
     title: 'Q3 PLATFORM MAINTENANCE SCHEDULE',
     description: 'Essential updates on our LMS infrastructure and planned downtime for performance optimization.',
-    link: '#',
     linkText: 'VIEW DETAILS'
   },
   {
+    slug: 'top-10-productivity-tools',
     tag: 'RESOURCES',
     date: 'AUG 22, 2024',
     title: 'TOP 10 PRODUCTIVITY TOOLS FOR LEADERS',
     description: 'Our curated list of software that top-tier executives use to streamline their daily workflows.',
-    link: '#',
     linkText: 'READ MORE'
   }
 ];
@@ -112,9 +113,9 @@ export default function BlogPage() {
             <p className="text-neutral-300 mb-8 leading-relaxed">
               Discover the core principles of transformation that are helping global leaders scale their operations while maintaining elite performance standards.
             </p>
-            <button className="px-8 py-3 bg-[#E5832E] hover:bg-[#D47225] text-white text-xs font-bold rounded-full uppercase tracking-wider transition-colors shadow-md">
+            <Link href="/blog/strategic-consulting-operational-excellence" className="inline-block px-8 py-3 bg-[#E5832E] hover:bg-[#D47225] text-white text-xs font-bold rounded-full uppercase tracking-wider transition-colors shadow-md">
               Read Full Article
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -150,7 +151,7 @@ export default function BlogPage() {
         {filteredPosts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {currentPosts.map((post, index) => (
-              <div key={index} className="flex flex-col group cursor-pointer border border-neutral-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white">
+              <Link href={`/blog/${post.slug}`} key={index} className="flex flex-col group cursor-pointer border border-neutral-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white">
                 {/* Image Placeholder */}
                 <div className="relative aspect-[16/9] bg-neutral-800 overflow-hidden">
                   <div className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
@@ -177,7 +178,7 @@ export default function BlogPage() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
