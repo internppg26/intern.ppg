@@ -58,7 +58,7 @@ export default function Navbar() {
         {/* Action Button */}
         <div>
           <Link
-            href="/contact"
+            href="/register"
             className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-dark transition-colors inline-flex items-center"
           >
             Mulai LMS <span className="ml-2">&gt;</span>
