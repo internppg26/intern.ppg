@@ -18,21 +18,14 @@ export const metadata: Metadata = {
   description: "PT. Performa Puncak Group - Sistem Manajemen Pembelajaran (LMS) dan Company Profile",
 };
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${poppins.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+        {children}
       </body>
     </html>
   );
