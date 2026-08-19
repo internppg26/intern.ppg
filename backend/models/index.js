@@ -2,13 +2,10 @@ const { Sequelize, DataTypes } = require('sequelize');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: process.env.NODE_ENV === 'production' 
-    ? './database.sqlite' 
-    : './database.sqlite',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
-});
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.js')[env];
+
+const sequelize = new Sequelize(config);
 
 const User = require('./User')(sequelize, DataTypes);
 const Program = require('./Program')(sequelize, DataTypes);
@@ -30,6 +27,8 @@ Enrollment.belongsTo(Program, { foreignKey: 'programId' });
 Program.hasMany(Module, { foreignKey: 'programId' });
 Module.belongsTo(Program, { foreignKey: 'programId' });
 
+Program.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
+User.hasMany(Program, { foreignKey: 'instructorId' });
 User.hasMany(Module, { foreignKey: 'instructorId' });
 Module.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
 

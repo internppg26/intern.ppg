@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.get('/', (req, res) => {
@@ -20,8 +21,42 @@ app.get('/api/health', (req, res) => {
 });
 
 // Auth routes
+console.log('[DEBUG] Loading auth router');
 const authRouter = require('./routes/auth');
 app.use('/api/auth', authRouter);
+
+// Program routes
+console.log('[DEBUG] Loading program router');
+const programRouter = require('./routes/program');
+app.use('/api/programs', programRouter);
+
+// Module routes
+const moduleRouter = require('./routes/module');
+app.use('/api/modules', moduleRouter);
+
+// Enrollment routes
+const enrollmentRouter = require('./routes/enrollment');
+app.use('/api/enrollments', enrollmentRouter);
+
+// Article routes
+const articleRouter = require('./routes/article');
+app.use('/api/articles', articleRouter);
+
+// Gallery routes
+const galleryRouter = require('./routes/gallery');
+app.use('/api/galleries', galleryRouter);
+
+// File routes
+const fileRouter = require('./routes/file');
+app.use('/api/files', fileRouter);
+
+// Exam routes
+const examRouter = require('./routes/exam');
+app.use('/api/exams', examRouter);
+
+// Certificate routes
+const certificateRouter = require('./routes/certificate');
+app.use('/api/certificates', certificateRouter);
 
 // Sync database and start server
 async function start() {
@@ -29,16 +64,25 @@ async function start() {
     await db.sequelize.authenticate();
     console.log('Database connected.');
     if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: true });
-      console.log('Database synced.');
+      await db.sequelize.sync({ alter: false });
+      console.log('Database synced (no alter).');
     }
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
+    // Keep server reference
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    });
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught Exception:', err);
+    });
+    // Keep event loop alive
+    setInterval(() => {}, 10000);
   } catch (error) {
     console.error('Startup error:', error);
     process.exit(1);
   }
 }
 
-start();
+start().catch(err => console.error('Start failed:', err));
