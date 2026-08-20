@@ -11,6 +11,7 @@ export default function CoachCoursePage() {
       id: 1,
       title: 'ADVANCED LEADERSHIP STRATEGY',
       tag: 'STRATEGY',
+      program: 'Corporate Program',
       desc: 'Elevate your executive capabilities with data-driven strategic planning and human-centric...',
       duration: '30 Days Access',
       instructor: 'Dr. Jajang Sutarman',
@@ -21,6 +22,7 @@ export default function CoachCoursePage() {
       id: 2,
       title: 'DIGITAL TRANSFORMATION FOR SMBS',
       tag: 'DIGITAL',
+      program: 'Entrepreneurial Program',
       desc: 'Practical roadmap for small businesses to scale using modern cloud infrastructure and AI tools.',
       duration: '30 Days Access',
       instructor: 'Dr. Jajang Sutarman',
@@ -31,6 +33,7 @@ export default function CoachCoursePage() {
       id: 3,
       title: 'PUBLIC POLICY CERTIFICATION',
       tag: 'POLICY',
+      program: 'Government Program',
       desc: 'Understanding modern governance, ethics, and policy analysis for the 21st-century public servant.',
       duration: '30 Days Access',
       instructor: 'Dr. Jajang Sutarman',
@@ -41,6 +44,7 @@ export default function CoachCoursePage() {
       id: 4,
       title: 'AGILE MANAGEMENT WORKSHOP',
       tag: 'PROFESSIONAL',
+      program: 'Educational Program',
       desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
       duration: 'Flexible Duration',
       instructor: 'Expert Facilitator',
@@ -51,6 +55,7 @@ export default function CoachCoursePage() {
       id: 5,
       title: 'SUSTAINABILITY IN TECH',
       tag: 'PROFESSIONAL',
+      program: 'Certification Program',
       desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
       duration: 'Flexible Duration',
       instructor: 'Expert Facilitator',
@@ -61,6 +66,7 @@ export default function CoachCoursePage() {
       id: 6,
       title: 'GLOBAL MARKETING ESSENTIALS',
       tag: 'PROFESSIONAL',
+      program: 'Public & In-House Program',
       desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
       duration: 'Flexible Duration',
       instructor: 'Expert Facilitator',
@@ -68,6 +74,11 @@ export default function CoachCoursePage() {
       isEnrolled: false
     },
   ]);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [programFilter, setProgramFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 3;
 
   // Load from sessionStorage on mount to persist enrolled status across page navigation
   useEffect(() => {
@@ -148,88 +159,140 @@ export default function CoachCoursePage() {
             </span>
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari program pelatihan..." 
               className="w-full pl-12 pr-4 py-2.5 bg-neutral-100 border border-neutral-200 rounded-md text-sm focus:outline-none focus:border-[#0B2545] transition-colors"
             />
           </div>
           <div className="flex gap-4">
-            <select className="px-4 py-2.5 bg-neutral-100 border border-neutral-200 rounded-md text-sm font-medium text-[#0B2545] focus:outline-none appearance-none pr-10 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230B2545%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:calc(100%-12px)_center] min-w-[160px]">
-              <option>Filter by Program</option>
-            </select>
-            <select className="px-4 py-2.5 bg-neutral-100 border border-neutral-200 rounded-md text-sm font-medium text-[#0B2545] focus:outline-none appearance-none pr-10 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230B2545%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:calc(100%-12px)_center] min-w-[160px]">
-              <option>Filter by Bidang</option>
+            <select 
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="px-4 py-2.5 bg-neutral-100 border border-neutral-200 rounded-md text-sm font-medium text-[#0B2545] focus:outline-none appearance-none pr-10 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%230B2545%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:calc(100%-12px)_center] min-w-[160px]"
+            >
+              <option value="">Filter by Program</option>
+              <option value="Corporate Program">Corporate Program</option>
+              <option value="Government Program">Government Program</option>
+              <option value="Educational Program">Educational Program</option>
+              <option value="Certification Program">Certification Program</option>
+              <option value="Entrepreneurial Program">Entrepreneurial Program</option>
+              <option value="Public & In-House Program">Public &amp; In-House Program</option>
             </select>
           </div>
         </div>
 
         {/* Course Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {courses.map(course => (
-            <div key={course.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-6">
-              
-              <div className="rounded-2xl overflow-hidden mb-6 aspect-[4/2.5]">
-                <img src={course.img} alt={course.title} className="w-full h-full object-cover" />
-              </div>
-              
-              <div className="mb-4">
-                <span className="inline-block bg-[#FFF8F3] text-[#D47225] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-3">
-                  {course.tag}
-                </span>
-                <h3 className="font-black text-[#0B2545] text-lg leading-tight mb-2 uppercase">{course.title}</h3>
-                <p className="text-xs text-neutral-500 leading-relaxed line-clamp-3">{course.desc}</p>
+        {(() => {
+          const filteredCourses = courses.filter(c => {
+            const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.desc.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesProgram = programFilter === '' || programFilter === 'Filter by Program' ? true : c.program === programFilter;
+            return matchesSearch && matchesProgram;
+          });
+
+          const totalPages = Math.max(1, Math.ceil(filteredCourses.length / ITEMS_PER_PAGE));
+          
+          // Ensure current page is valid after filtering
+          const safeCurrentPage = Math.min(currentPage, totalPages);
+          if (safeCurrentPage !== currentPage) {
+             setCurrentPage(safeCurrentPage);
+          }
+
+          const paginatedCourses = filteredCourses.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
+
+          return (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {paginatedCourses.map(course => (
+                  <div key={course.id} className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-6">
+                    
+                    <div className="rounded-2xl overflow-hidden mb-6 aspect-[4/2.5] relative">
+                      <img src={course.img} alt={course.title} className="w-full h-full object-cover" />
+                      <div className="absolute top-4 left-4 flex gap-2">
+                        <span className="bg-[#0B2545] text-white text-[9px] font-black px-3 py-1.5 rounded uppercase tracking-widest shadow-sm">
+                          {course.program.replace(' Program', '').replace(' & In-House', '')}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <span className="inline-block bg-[#FFF8F3] text-[#D47225] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-3">
+                        {course.tag}
+                      </span>
+                      <h3 className="font-black text-[#0B2545] text-lg leading-tight mb-2 uppercase">{course.title}</h3>
+                      <p className="text-xs text-neutral-500 leading-relaxed line-clamp-3">{course.desc}</p>
+                    </div>
+
+                    <div className="space-y-2 mb-6 mt-auto">
+                      <div className="flex items-center gap-2 text-[11px] text-neutral-500 font-medium">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        {course.duration}
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-neutral-500 font-medium">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        {course.instructor}
+                      </div>
+                    </div>
+
+                    {/* Dynamic Buttons based on isEnrolled */}
+                    {course.isEnrolled ? (
+                      <div className="space-y-3">
+                        <Link href={`/coach-course/${course.id}/material`} className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                          Material Course &rarr;
+                        </Link>
+                        <Link href={`/coach/course/${course.id}`} className="w-full bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                          Detail Course &rarr;
+                        </Link>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleOpenEnroll(course.id)}
+                        className="w-full bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 mt-auto rounded-full text-sm font-bold flex items-center justify-center transition-colors shadow-lg shadow-[#D47225]/20"
+                      >
+                        Enroll
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              <div className="space-y-2 mb-6 mt-auto">
-                <div className="flex items-center gap-2 text-[11px] text-neutral-500 font-medium">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  {course.duration}
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-neutral-500 font-medium">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  {course.instructor}
-                </div>
-              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mb-10">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={safeCurrentPage === 1}
+                    className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-400 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    &lt;
+                  </button>
+                  
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 flex items-center justify-center rounded-full font-bold transition-colors ${
+                        safeCurrentPage === i + 1 
+                          ? 'bg-[#0B2545] text-white shadow-md' 
+                          : 'border border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
 
-              {/* Dynamic Buttons based on isEnrolled */}
-              {course.isEnrolled ? (
-                <div className="space-y-3">
-                  <Link href={`/coach-course/${course.id}/material`} className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                    Material Course &rarr;
-                  </Link>
-                  <Link href={`/coach/course/${course.id}`} className="w-full bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                    Detail Course &rarr;
-                  </Link>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={safeCurrentPage === totalPages}
+                    className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-400 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    &gt;
+                  </button>
                 </div>
-              ) : (
-                <button 
-                  onClick={() => handleOpenEnroll(course.id)}
-                  className="w-full bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 mt-auto rounded-full text-sm font-bold flex items-center justify-center transition-colors shadow-lg shadow-[#D47225]/20"
-                >
-                  Enroll
-                </button>
               )}
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="flex justify-center items-center gap-2 mb-10">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-400 hover:bg-neutral-50 transition-colors">
-            &lt;
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full font-bold bg-[#0B2545] text-white shadow-md">
-            1
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full font-bold border border-neutral-200 text-neutral-600 hover:bg-neutral-50">
-            2
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full font-bold border border-neutral-200 text-neutral-600 hover:bg-neutral-50">
-            3
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-400 hover:bg-neutral-50 transition-colors">
-            &gt;
-          </button>
-        </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Enroll Modal */}

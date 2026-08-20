@@ -18,6 +18,7 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
     {
       id: 1,
       title: 'BAB 1 : FOUNDATION AND CORE PRINCIPLES',
+      isOpen: true,
       subChapters: [
         { id: 11, title: 'Sub-bab 1 : 5 Foundation', duration: '10', isActive: false, type: 'material' },
         { id: 12, title: 'Sub-bab 2 : 6 Core Principles', duration: '15', isActive: true, type: 'material' },
@@ -26,16 +27,19 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
     {
       id: 2,
       title: 'SEGMENT 2: MARKET ANALYSIS',
+      isOpen: true,
       subChapters: []
     },
     {
       id: 3,
       title: 'SEGMENT 3: OPERATIONAL EXCELLENCE',
+      isOpen: true,
       subChapters: []
     },
     {
       id: 4,
       title: 'SEGMENT 4: CONCLUSION',
+      isOpen: true,
       subChapters: []
     }
   ]);
@@ -237,6 +241,35 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
     }));
   };
 
+  const handleToggleChapter = (chapterId: number) => {
+    setChapters(chapters.map(ch => ch.id === chapterId ? { ...ch, isOpen: !ch.isOpen } : ch));
+  };
+
+  const handleMoveSubChapter = (chapterId: number, subId: number, direction: 'up' | 'down', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setChapters(chapters.map(ch => {
+      if (ch.id === chapterId) {
+        const index = ch.subChapters.findIndex(s => s.id === subId);
+        if (index === -1) return ch;
+        if (direction === 'up' && index > 0) {
+          const newSubs = [...ch.subChapters];
+          const temp = newSubs[index];
+          newSubs[index] = newSubs[index - 1];
+          newSubs[index - 1] = temp;
+          return { ...ch, subChapters: newSubs };
+        }
+        if (direction === 'down' && index < ch.subChapters.length - 1) {
+          const newSubs = [...ch.subChapters];
+          const temp = newSubs[index];
+          newSubs[index] = newSubs[index + 1];
+          newSubs[index + 1] = temp;
+          return { ...ch, subChapters: newSubs };
+        }
+      }
+      return ch;
+    }));
+  };
+
   const handleEditSubBabDuration = (newDuration: string) => {
     setChapters(chapters.map(ch => ({
       ...ch,
@@ -244,8 +277,25 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
     })));
   };
 
+  const [isOverviewActive, setIsOverviewActive] = useState(false);
+
   const activeSubChapter = chapters.flatMap(c => c.subChapters).find(s => s.isActive);
   const isSubBab1 = activeSubChapter?.id === 11;
+
+  const handleOverviewClick = () => {
+    setIsOverviewActive(true);
+    setChapters(chapters.map(c => ({
+      ...c,
+      subChapters: c.subChapters.map(s => ({ ...s, isActive: false }))
+    })));
+    // Reset blocks to an overview template if desired, or keep current
+    const demoBlocks: Block[] = [
+      { id: '1', type: 'h1', content: 'Course Overview' },
+      { id: '2', type: 'text', content: 'Di sini Anda dapat menuliskan ringkasan materi dan tujuan pembelajaran untuk course ini.' }
+    ];
+    setBlocks(demoBlocks);
+    saveToHistory(demoBlocks);
+  };
 
   return (
     <div className="flex h-screen bg-neutral-50 overflow-hidden font-sans">
@@ -263,71 +313,100 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="border border-neutral-200 rounded-lg p-4 font-bold text-[#0B2545] text-sm hover:bg-neutral-50 cursor-pointer">
+          <div 
+            onClick={handleOverviewClick}
+            className={`border rounded-lg p-4 font-bold text-sm cursor-pointer transition-colors ${isOverviewActive ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
+          >
             OVERVIEW
           </div>
 
           {chapters.map((ch, idx) => (
             <div key={ch.id} className="space-y-2">
-              <div className="border border-neutral-200 rounded-lg bg-neutral-50 p-4 flex justify-between items-start">
-                <div className="font-black text-[#0B2545] text-xs uppercase pr-2 leading-relaxed">
-                  {ch.title}
+              <div className="border border-neutral-200 rounded-lg bg-neutral-50 p-4 flex justify-between items-start cursor-pointer hover:bg-neutral-100 transition-colors" onClick={() => handleToggleChapter(ch.id)}>
+                <div className="font-black text-[#0B2545] text-xs uppercase pr-2 leading-relaxed flex items-center gap-2">
+                  <span>{ch.title}</span>
                 </div>
-                <div className="flex flex-col gap-1 shrink-0">
-                  <button 
-                    onClick={() => handleAddSidebarSubBab(ch.id)}
-                    className="border border-[#0B2545] text-[#0B2545] text-[8px] font-bold px-2 py-1 rounded-full uppercase hover:bg-[#0B2545] hover:text-white transition-colors"
-                  >
-                    + SUB-BAB
-                  </button>
-                  <button 
-                    onClick={() => handleAddQuiz(ch.id)}
-                    className="border border-[#0B2545] text-[#0B2545] text-[8px] font-bold px-2 py-1 rounded-full uppercase hover:bg-[#0B2545] hover:text-white transition-colors"
-                  >
-                    + QUIZ
-                  </button>
+                <div className="flex flex-col gap-1 shrink-0 items-end">
+                  <div className="flex items-center gap-2 mb-1">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleAddSidebarSubBab(ch.id); }}
+                      className="border border-[#0B2545] text-[#0B2545] text-[8px] font-bold px-2 py-1 rounded-full uppercase hover:bg-[#0B2545] hover:text-white transition-colors"
+                    >
+                      + SUB-BAB
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleAddQuiz(ch.id); }}
+                      className="border border-[#0B2545] text-[#0B2545] text-[8px] font-bold px-2 py-1 rounded-full uppercase hover:bg-[#0B2545] hover:text-white transition-colors"
+                    >
+                      + QUIZ
+                    </button>
+                    <svg className={`w-4 h-4 text-neutral-500 transition-transform ${ch.isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
                 </div>
               </div>
               
-              {ch.subChapters.map(sub => (
-                <div 
-                  key={sub.id} 
-                  onClick={() => {
-                    // Activate this sub-chapter visually (if simulating subbab1/subbab2, keep existing logic, else just set active)
-                    if (sub.id === 11) handleSimulateSubBab1();
-                    else if (sub.id === 12) handleSimulateSubBab2();
-                    else {
-                      setChapters(chapters.map(c => ({
-                        ...c,
-                        subChapters: c.subChapters.map(s => ({
-                          ...s,
-                          isActive: s.id === sub.id
-                        }))
-                      })));
-                    }
-                  }}
-                  className={`border rounded-lg p-3 flex justify-between items-center text-xs cursor-pointer transition-colors group ${sub.isActive ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'bg-white border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
-                >
-                  <input
-                    type="text"
-                    value={sub.title}
-                    onChange={(e) => handleEditSidebarSubBabTitle(ch.id, sub.id, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`font-bold w-full bg-transparent focus:outline-none ${sub.isActive ? 'text-white' : 'text-[#0B2545]'}`}
-                  />
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={sub.isActive ? 'text-white/70' : 'text-neutral-500'}>{sub.duration} min</span>
-                    {/* Delete button (hidden by default, visible on hover) */}
-                    <button 
-                      onClick={(e) => handleDeleteSidebarSubBab(ch.id, sub.id, e)}
-                      className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity"
-                      title="Hapus Sub-bab"
+              {ch.isOpen && (
+                <div className="space-y-2 ml-4">
+                  {ch.subChapters.map((sub, index) => (
+                    <div 
+                      key={sub.id} 
+                      onClick={() => {
+                        setIsOverviewActive(false);
+                        // Activate this sub-chapter visually (if simulating subbab1/subbab2, keep existing logic, else just set active)
+                        if (sub.id === 11) handleSimulateSubBab1();
+                        else if (sub.id === 12) handleSimulateSubBab2();
+                        else {
+                          setChapters(chapters.map(c => ({
+                            ...c,
+                            subChapters: c.subChapters.map(s => ({
+                              ...s,
+                              isActive: s.id === sub.id
+                            }))
+                          })));
+                        }
+                      }}
+                      className={`border rounded-lg p-3 flex justify-between items-center text-xs cursor-pointer transition-colors group ${!isOverviewActive && sub.isActive ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'bg-white border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                  </div>
+                      <input
+                        type="text"
+                        value={sub.title}
+                        onChange={(e) => handleEditSidebarSubBabTitle(ch.id, sub.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`font-bold w-full bg-transparent focus:outline-none ${sub.isActive ? 'text-white' : 'text-[#0B2545]'}`}
+                      />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={sub.isActive ? 'text-white/70' : 'text-neutral-500'}>{sub.duration} min</span>
+                        
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => handleMoveSubChapter(ch.id, sub.id, 'up', e)}
+                            disabled={index === 0}
+                            className={`p-1 rounded ${index === 0 ? 'text-neutral-300' : (sub.isActive ? 'hover:bg-[#13325B]' : 'hover:bg-neutral-200')}`}
+                            title="Geser ke Atas"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                          </button>
+                          <button 
+                            onClick={(e) => handleMoveSubChapter(ch.id, sub.id, 'down', e)}
+                            disabled={index === ch.subChapters.length - 1}
+                            className={`p-1 rounded ${index === ch.subChapters.length - 1 ? 'text-neutral-300' : (sub.isActive ? 'hover:bg-[#13325B]' : 'hover:bg-neutral-200')}`}
+                            title="Geser ke Bawah"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeleteSidebarSubBab(ch.id, sub.id, e)}
+                            className="p-1 rounded hover:text-red-500"
+                            title="Hapus Sub-bab"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           ))}
         </div>
@@ -402,27 +481,31 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
                 {/* Header Title Editor */}
                 <div className="flex justify-between items-start mb-8 gap-8">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-[#0B2545] uppercase tracking-widest">
-                      <span className="bg-[#0B2545] text-white px-3 py-1 rounded-full">BAB 1</span>
-                      <span>&mdash; INTRODUCTION</span>
-                    </div>
+                    {!isOverviewActive && (
+                      <div className="flex items-center gap-2 mb-2 text-xs font-bold text-[#0B2545] uppercase tracking-widest">
+                        <span className="bg-[#0B2545] text-white px-3 py-1 rounded-full">BAB 1</span>
+                        <span>&mdash; INTRODUCTION</span>
+                      </div>
+                    )}
                     <h1 className="text-4xl font-black text-[#0B2545] uppercase tracking-tight break-words">
-                      {activeSubChapter ? activeSubChapter.title : 'SUB-BAB 2 : 6 CORE PRINCIPLES'}
+                      {isOverviewActive ? 'OVERVIEW' : (activeSubChapter ? activeSubChapter.title : 'SUB-BAB 2 : 6 CORE PRINCIPLES')}
                     </h1>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
-                    {isSubBab1 && (
+                    {isSubBab1 && !isOverviewActive && (
                       <span className="text-xs text-neutral-500 max-w-[200px] text-right">Waktu perkiraan untuk menyelesaikan materi ini (bukan batas waktu)</span>
                     )}
-                    <div className="flex items-center border border-neutral-300 rounded divide-x divide-neutral-300 overflow-hidden shrink-0">
-                      <input 
-                        type="text" 
-                        value={activeSubChapter?.duration || ''} 
-                        onChange={(e) => handleEditSubBabDuration(e.target.value)}
-                        className="w-12 text-center py-2 text-sm font-bold text-[#0B2545] focus:outline-none" 
-                      />
-                      <span className="px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
-                    </div>
+                    {!isOverviewActive && (
+                      <div className="flex items-center border border-neutral-300 rounded divide-x divide-neutral-300 overflow-hidden shrink-0">
+                        <input 
+                          type="text" 
+                          value={activeSubChapter?.duration || ''} 
+                          onChange={(e) => handleEditSubBabDuration(e.target.value)}
+                          className="w-12 text-center py-2 text-sm font-bold text-[#0B2545] focus:outline-none" 
+                        />
+                        <span className="px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
+                      </div>
+                    )}
                     <button className="bg-[#0B2545] hover:bg-[#13325B] text-white px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
                       SIMPAN
                     </button>
@@ -455,15 +538,20 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
                       
                       {/* Empty / Text Block */}
                       {(block.type === 'empty' || block.type === 'text') && (
-                        <div className="relative">
-                          <input
-                            type="text"
+                        <div className="relative flex">
+                          <textarea
                             value={block.content}
-                            onChange={(e) => handleBlockChange(block.id, e.target.value)}
+                            onChange={(e) => {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                              handleBlockChange(block.id, e.target.value);
+                            }}
                             onKeyDown={(e) => handleBlockKeyDown(block.id, e)}
                             onBlur={handleBlockBlur}
                             placeholder={block.type === 'empty' ? "Ketik '/' untuk menambahkan teks, heading, atau embed media..." : ""}
-                            className="w-full text-neutral-600 text-[15px] focus:outline-none placeholder:text-neutral-300 py-1"
+                            className="w-full text-neutral-600 text-[15px] focus:outline-none placeholder:text-neutral-300 py-1 resize-none overflow-hidden bg-transparent"
+                            rows={1}
+                            style={{ minHeight: '32px' }}
                           />
                           
                           {/* Slash Menu */}
@@ -517,29 +605,37 @@ export default function CoachCourseMaterialPage({ params }: { params: { id: stri
 
                       {/* Heading 1 Block */}
                       {block.type === 'h1' && (
-                        <input
-                          type="text"
+                        <textarea
                           value={block.content}
-                          onChange={(e) => handleBlockChange(block.id, e.target.value)}
+                          onChange={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                            handleBlockChange(block.id, e.target.value);
+                          }}
                           onKeyDown={(e) => handleBlockKeyDown(block.id, e)}
                           onBlur={handleBlockBlur}
                           placeholder="Heading 1"
-                          className="w-full text-3xl font-black text-[#0B2545] focus:outline-none placeholder:text-neutral-300 py-2"
+                          className="w-full text-3xl font-black text-[#0B2545] focus:outline-none placeholder:text-neutral-300 py-2 resize-none overflow-hidden bg-transparent leading-tight"
                           autoFocus
+                          rows={1}
                         />
                       )}
 
                       {/* Heading 2 Block */}
                       {block.type === 'h2' && (
-                        <input
-                          type="text"
+                        <textarea
                           value={block.content}
-                          onChange={(e) => handleBlockChange(block.id, e.target.value)}
+                          onChange={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                            handleBlockChange(block.id, e.target.value);
+                          }}
                           onKeyDown={(e) => handleBlockKeyDown(block.id, e)}
                           onBlur={handleBlockBlur}
                           placeholder="Heading 2"
-                          className="w-full text-xl font-bold text-[#0B2545] focus:outline-none placeholder:text-neutral-300 py-1 mt-2"
+                          className="w-full text-xl font-bold text-[#0B2545] focus:outline-none placeholder:text-neutral-300 py-1 mt-2 resize-none overflow-hidden bg-transparent leading-tight"
                           autoFocus
+                          rows={1}
                         />
                       )}
 
