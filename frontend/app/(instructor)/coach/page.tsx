@@ -3,16 +3,49 @@
 import React from 'react';
 import Link from 'next/link';
 
+type ScheduleEvent = {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+  link?: string;
+  notes?: string;
+};
+
 export default function CoachDashboardPage() {
+  const [todayEvents, setTodayEvents] = React.useState<ScheduleEvent[]>([]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('coach_schedule_events');
+    if (saved) {
+      try {
+        const parsed: ScheduleEvent[] = JSON.parse(saved);
+        const todayStr = new Date().toISOString().split('T')[0];
+        const filtered = parsed
+          .filter(ev => ev.date === todayStr)
+          .sort((a, b) => a.startTime.localeCompare(b.startTime));
+        setTodayEvents(filtered);
+      } catch (e) {
+        console.error("Failed to parse events", e);
+      }
+    } else {
+      // Mock if nothing in local storage yet
+      const todayStr = new Date().toISOString().split('T')[0];
+      setTodayEvents([
+        { id: '1', title: '1-on-1 Mentoring - Budi Utomo', date: todayStr, startTime: '09:00', endTime: '10:00', type: 'Mentoring' },
+        { id: '2', title: 'Workshop: Effective Comm.', date: todayStr, startTime: '13:30', endTime: '15:30', type: 'Workshop' }
+      ]);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col min-h-full">
       {/* Top Bar / Search */}
       <div className="bg-white border-b border-neutral-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="relative w-full max-w-xl">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </span>
-          <input type="text" placeholder="Search sessions, students, or reports..." className="w-full pl-12 pr-4 py-2.5 bg-neutral-100/80 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0B2545]/20 transition-all" />
+          
         </div>
         <div className="flex items-center gap-4 ml-4 border-l border-neutral-200 pl-4">
           <button className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100 transition-colors">
@@ -32,7 +65,7 @@ export default function CoachDashboardPage() {
               Selamat Datang, Coach<br />Pratama!
             </h1>
             <p className="text-neutral-300 text-sm leading-relaxed mb-8 max-w-md">
-              Anda memiliki 3 sesi konsultasi hari ini dan 15 penilaian yang menunggu tinjauan Anda. Mari kita bentuk pemimpin masa depan bersama.
+              Anda memiliki {todayEvents.length} sesi konsultasi hari ini dan 15 penilaian yang menunggu tinjauan Anda. Mari kita bentuk pemimpin masa depan bersama.
             </p>
             <button className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-6 py-3 rounded-full font-bold text-sm transition-colors shadow-lg shadow-[#D47225]/30">
               Lihat Laporan Mingguan
@@ -63,7 +96,7 @@ export default function CoachDashboardPage() {
               <span className="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">HARI INI</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">3</h2>
+              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">{todayEvents.length}</h2>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">UPCOMING SESSIONS</p>
             </div>
           </div>
@@ -107,54 +140,41 @@ export default function CoachDashboardPage() {
             
             <div className="space-y-4 relative before:absolute before:inset-0 before:ml-[60px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-neutral-200">
               
-              {/* Event 1 */}
-              <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm flex items-center gap-6 relative z-10">
-                <div className="w-16 text-center shrink-0">
-                  <div className="text-lg font-black text-[#0B2545]">09:00</div>
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase">PAGI</div>
-                </div>
-                <div className="w-px h-12 bg-neutral-200 shrink-0 hidden md:block"></div>
-                <div className="flex-grow">
-                  <h4 className="font-bold text-[#0B2545] text-sm mb-1">1-on-1 Mentoring - Budi Utomo</h4>
-                  <p className="text-xs text-neutral-500">Leadership Development Program</p>
-                </div>
-                <button className="shrink-0 bg-[#0B2545] hover:bg-[#13325B] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line></svg>
-                  Join Meet
-                </button>
-              </div>
+              {todayEvents.map(ev => {
+                const hour = parseInt(ev.startTime.split(':')[0], 10);
+                const isAm = hour < 12;
+                const isWorkshop = ev.type === 'Workshop';
 
-              {/* Event 2 */}
-              <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm flex items-center gap-6 relative z-10">
-                <div className="w-16 text-center shrink-0">
-                  <div className="text-lg font-black text-neutral-400">13:30</div>
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase">SIANG</div>
-                </div>
-                <div className="w-px h-12 bg-neutral-200 shrink-0 hidden md:block"></div>
-                <div className="flex-grow">
-                  <h4 className="font-bold text-[#0B2545] text-sm mb-1">Workshop: Effective Comm.</h4>
-                  <p className="text-xs text-neutral-500">Batch 14 - Group A</p>
-                </div>
-                <span className="shrink-0 bg-neutral-100 text-neutral-500 px-5 py-2.5 rounded-full text-xs font-bold">
-                  Belum Dimulai
-                </span>
-              </div>
+                return (
+                  <div key={ev.id} className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm flex items-center gap-6 relative z-10">
+                    <div className="w-16 text-center shrink-0">
+                      <div className="text-lg font-black text-[#0B2545]">{ev.startTime}</div>
+                      <div className="text-[10px] font-bold text-neutral-400 uppercase">{isAm ? 'PAGI' : 'SIANG'}</div>
+                    </div>
+                    <div className="w-px h-12 bg-neutral-200 shrink-0 hidden md:block"></div>
+                    <div className="flex-grow">
+                      <h4 className="font-bold text-[#0B2545] text-sm mb-1">{ev.title}</h4>
+                      <p className="text-xs text-neutral-500">{ev.notes || ev.type}</p>
+                    </div>
+                    {!isWorkshop ? (
+                      <button className="shrink-0 bg-[#0B2545] hover:bg-[#13325B] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line></svg>
+                        Join Meet
+                      </button>
+                    ) : (
+                      <span className="shrink-0 bg-neutral-100 text-neutral-500 px-5 py-2.5 rounded-full text-xs font-bold">
+                        Belum Dimulai
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
 
-              {/* Event 3 */}
-              <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm flex items-center gap-6 relative z-10">
-                <div className="w-16 text-center shrink-0">
-                  <div className="text-lg font-black text-neutral-400">15:00</div>
-                  <div className="text-[10px] font-bold text-neutral-400 uppercase">SORE</div>
+              {todayEvents.length === 0 && (
+                <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm relative z-10 text-center">
+                  <p className="text-sm text-neutral-500 py-4">Tidak ada jadwal untuk hari ini.</p>
                 </div>
-                <div className="w-px h-12 bg-neutral-200 shrink-0 hidden md:block"></div>
-                <div className="flex-grow">
-                  <h4 className="font-bold text-[#0B2545] text-sm mb-1">Curriculum Review</h4>
-                  <p className="text-xs text-neutral-500">Internal Faculty Meeting</p>
-                </div>
-                <span className="shrink-0 bg-neutral-100 text-neutral-500 px-5 py-2.5 rounded-full text-xs font-bold">
-                  Belum Dimulai
-                </span>
-              </div>
+              )}
 
             </div>
           </div>
