@@ -1,9 +1,13 @@
 const express = require('express');
+const { OAuth2Client } = require('google-auth-library');
 const { User } = require('../models');
 const { generateToken, hashPassword, comparePassword } = require('../utils/auth');
 const { authenticate } = require('../middlewares/auth');
 
 const router = express.Router();
+
+// Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 router.post('/register', async (req, res) => {
   try {
@@ -101,6 +105,58 @@ router.put('/change-password', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ error: 'Password change failed' });
+  }
+});
+
+// Google Login endpoint
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ error: 'Google ID token required' });
+    }
+
+    // Verify Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload || !payload.email) {
+      return res.status(401).json({ error: 'Invalid Google token' });
+    }
+
+    const { email, name, picture } = payload;
+
+    // Find or create user
+    let user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      // Create new user from Google account
+      const randomPassword = require('crypto').randomBytes(32).toString('hex');
+      const hashedPassword = await hashPassword(randomPassword);
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        password: hashedPassword,
+        role: 'student',
+        avatar: picture || null,
+      });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken(user);
+    res.json({
+      user: user.toJSON(),
+      token,
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ error: 'Google login failed' });
   }
 });
 
