@@ -8,7 +8,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// CORS configuration for frontend integration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173',
+    process.env.FRONTEND_URL,
+  ].filter(Boolean),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -64,7 +77,10 @@ async function start() {
     await db.sequelize.authenticate();
     console.log('Database connected.');
     if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: false });
+      await db.sequelize.sync({ alter: false }).catch(err => {
+        console.error('Database sync error:', err);
+        // Continue without sync
+      });
       console.log('Database synced (no alter).');
     }
     const server = app.listen(PORT, () => {
@@ -73,12 +89,12 @@ async function start() {
     // Keep server reference
     process.on('unhandledRejection', (reason, promise) => {
       console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      // Prevent default exit behavior
     });
     process.on('uncaughtException', (err) => {
       console.error('Uncaught Exception:', err);
+      // Do not exit - log only
     });
-    // Keep event loop alive
-    setInterval(() => {}, 10000);
   } catch (error) {
     console.error('Startup error:', error);
     process.exit(1);
