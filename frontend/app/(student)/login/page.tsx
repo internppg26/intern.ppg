@@ -15,19 +15,6 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-<<<<<<< Updated upstream:frontend/app/login/page.tsx
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      if (email.toLowerCase().startsWith('admin')) {
-        router.push('/admin');
-      } else if (email.toLowerCase().includes('coach') || email.toLowerCase().includes('instruktur')) {
-        router.push('/coach');
-      } else {
-        router.push('/dashboard');
-      }
-    }, 1000);
-=======
     
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
@@ -63,7 +50,6 @@ export default function LoginPage() {
       alert('An error occurred during login. Please try again.');
       setLoading(false);
     }
->>>>>>> Stashed changes:frontend/app/(student)/login/page.tsx
   };
 
   return (
