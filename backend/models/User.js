@@ -29,8 +29,11 @@ module.exports = (sequelize, DataTypes) => {
     phone: {
       type: DataTypes.STRING,
     },
-    avatar: {
+    instansi: {
       type: DataTypes.STRING,
+    },
+    avatar: {
+      type: DataTypes.TEXT,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
