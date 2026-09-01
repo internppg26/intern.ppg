@@ -2,8 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
-export default function CourseDetailPage({ params }: { params: { id: string } }) {
+export default function CourseDetailPage() {
+  const params = useParams();
   return (
     <div className="flex flex-col min-h-full">
       <div className="p-8 lg:p-12 max-w-7xl mx-auto w-full flex-grow">
