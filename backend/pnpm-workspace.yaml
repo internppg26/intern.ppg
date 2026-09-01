@@ -1,3 +1,8 @@
 allowBuilds:
+<<<<<<< HEAD
+  bcrypt: true
+  sqlite3: true
+=======
   bcrypt: set this to true or false
   sqlite3: set this to true or false
+>>>>>>> 219e769a3473966ae0cc28d6427d3d1431b1d6dd
