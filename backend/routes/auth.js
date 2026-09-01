@@ -76,11 +76,12 @@ router.get('/me', authenticate, (req, res) => {
 
 router.put('/profile', authenticate, async (req, res) => {
   try {
-    const { name, phone, avatar } = req.body;
+    const { name, phone, avatar, instansi } = req.body;
     const user = req.user;
     if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (avatar) user.avatar = avatar;
+    if (phone !== undefined) user.phone = phone;
+    if (instansi !== undefined) user.instansi = instansi;
+    if (avatar !== undefined) user.avatar = avatar;
     await user.save();
     res.json({ user: user.toJSON() });
   } catch (error) {
@@ -157,6 +158,16 @@ router.post('/google', async (req, res) => {
   } catch (error) {
     console.error('Google login error:', error);
     res.status(500).json({ error: 'Google login failed' });
+  }
+});
+
+router.delete('/me', authenticate, async (req, res) => {
+  try {
+    await req.user.destroy();
+    res.json({ message: 'Account deleted' });
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({ error: 'Deletion failed' });
   }
 });
 

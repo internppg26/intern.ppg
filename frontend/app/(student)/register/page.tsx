@@ -17,11 +17,30 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, username, role: 'student' }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Registration failed');
+        setLoading(false);
+        return;
+      }
+      
+      localStorage.setItem('demo_password', password);
+      alert('Registration successful! Please log in.');
       router.push('/login');
-    }, 1000);
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An error occurred during registration. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

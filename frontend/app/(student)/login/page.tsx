@@ -15,17 +15,41 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      if (email.toLowerCase().startsWith('admin')) {
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Login failed');
+        setLoading(false);
+        return;
+      }
+      
+      // Save token and user info
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('demo_password', password);
+      
+      const role = data.user.role?.toLowerCase() || 'student';
+      
+      if (role === 'admin') {
         router.push('/admin');
-      } else if (email.toLowerCase().includes('coach') || email.toLowerCase().includes('instruktur')) {
+      } else if (role === 'instructor' || role === 'coach') {
         router.push('/coach');
       } else {
         router.push('/dashboard');
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('An error occurred during login. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

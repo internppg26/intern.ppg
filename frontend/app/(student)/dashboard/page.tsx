@@ -4,13 +4,27 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function StudentDashboard() {
+  const [userName, setUserName] = React.useState('ALEX MORGAN');
+
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        if (user.name) setUserName(user.name.toUpperCase());
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
   return (
     <div className="p-8 lg:p-12 max-w-6xl mx-auto w-full">
       
       {/* Header Row */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-black text-[#0B2545] tracking-tight mb-2 uppercase">WELCOME BACK, ALEX MORGAN!</h1>
+          <h1 className="text-3xl font-black text-[#0B2545] tracking-tight mb-2 uppercase">WELCOME BACK, {userName}!</h1>
           <p className="text-[#E5832E] font-bold text-sm">Here is your learning progress for today.</p>
         </div>
         <div className="flex items-center gap-4">
