@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 
-export default function CourseDetailPage() {
+function CourseDetailContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const bidangName = searchParams?.get('name') || 'Bidang Pelatihan';
+  
   // --- States ---
   const [isOpen, setIsOpen] = useState(false);
+  const [courseTitle, setCourseTitle] = useState('Course Baru');
+  const [courseBadge, setCourseBadge] = useState('COURSE');
   
   // Form States
   const [about, setAbout] = useState('');
@@ -15,6 +20,21 @@ export default function CourseDetailPage() {
   const [instructorName, setInstructorName] = useState('');
   const [instructorRole, setInstructorRole] = useState('');
   const [instructorImage, setInstructorImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!params?.bidangId || !params?.courseId) return;
+    const coursesSaved = localStorage.getItem(`admin_courses_${params.bidangId}`);
+    if (coursesSaved) {
+      try {
+        const courses = JSON.parse(coursesSaved);
+        const current = courses.find((c: any) => c.id.toString() === params.courseId);
+        if (current) {
+          setCourseTitle(current.title);
+          setCourseBadge(current.badge || 'COURSE');
+        }
+      } catch (e) {}
+    }
+  }, [params?.bidangId, params?.courseId]);
 
   // Dynamic Lists
   const [learnItems, setLearnItems] = useState<{title: string, desc: string}[]>([]);
@@ -171,11 +191,11 @@ export default function CourseDetailPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-white">
+    <div className="flex flex-col flex-1 h-full overflow-hidden bg-white">
       {/* Top Bar */}
-      <div className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+      <div className="bg-white px-8 py-4 flex items-center justify-between shrink-0 shadow-sm z-20">
         <div className="text-[10px] md:text-xs font-bold text-neutral-500">
-          <Link href="/coach/course" className="hover:text-[#D47225] transition-colors">Program &gt; ... &gt;</Link> <span className="text-[#0B2545] font-black ml-1">Course Advanced Negotiation Strategy</span>
+          <Link href={`/admin/courses/${params.id}/${params.bidangId}?name=${encodeURIComponent(bidangName)}`} className="hover:text-[#D47225] transition-colors">Program &gt; ... &gt;</Link> <span className="text-[#0B2545] font-black ml-1">Course {courseTitle}</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative hidden md:block">
@@ -194,15 +214,16 @@ export default function CourseDetailPage() {
         </div>
       </div>
 
-      <div className="px-8 pb-12 max-w-[1400px] mx-auto w-full mt-8">
-        {/* Hero Section */}
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="px-8 pb-12 max-w-[1400px] mx-auto w-full mt-8">
+          {/* Hero Section */}
         <div className="bg-[#0B2545] rounded-3xl p-10 flex flex-col lg:flex-row justify-between items-center relative overflow-hidden mb-8 shadow-lg">
           <div className="lg:w-1/2 relative z-10 text-white">
-            <h1 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">Advanced<br/>Negotiation<br/>Strategy</h1>
+            <h1 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">{courseTitle}</h1>
             
             <div className="flex flex-wrap gap-2 mb-6">
-              <span className="bg-[#964B13] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
-                PENJUALAN DAN PEMASARAN (SALES AND MARKETING TRAINING)
+              <span className="bg-[#964B13] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest max-w-xs truncate">
+                {bidangName}
               </span>
               <span className="bg-[#EAF1F8] text-[#0B2545] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
                 CORPORATE
@@ -516,6 +537,15 @@ export default function CourseDetailPage() {
 
         </div>
       </div>
+      </div>
     </div>
+  );
+}
+
+export default function CourseDetailPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 bg-[#F9FAFC] flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0B2545]"></div></div>}>
+      <CourseDetailContent />
+    </Suspense>
   );
 }

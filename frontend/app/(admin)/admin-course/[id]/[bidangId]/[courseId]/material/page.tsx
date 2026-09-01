@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import QuizEditor from './QuizEditor';
 
 type BlockType = 'empty' | 'text' | 'h1' | 'h2' | 'embed_input' | 'embed_video';
@@ -13,8 +13,27 @@ interface Block {
   content: string;
 }
 
-export default function CoachCourseMaterialPage() {
+export default function AdminCourseMaterialPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const bidangName = searchParams?.get('name') || 'Nama Bidang Tidak Diketahui';
+  const [courseTitle, setCourseTitle] = useState('Loading...');
+
+  useEffect(() => {
+    if (!params?.courseId) return;
+    const saved = localStorage.getItem(`admin_course_detail_${params.courseId}`);
+    if (saved) {
+      setCourseTitle(JSON.parse(saved).title || 'Untitled Course');
+    } else {
+      const savedList = localStorage.getItem(`admin_courses_${params.bidangId}`);
+      if (savedList) {
+        const list = JSON.parse(savedList);
+        const course = list.find((c: any) => c.id.toString() === params.courseId);
+        if (course) setCourseTitle(course.title);
+      }
+    }
+  }, [params?.courseId, params?.bidangId]);
+
   // Sidebar State
   const [chapters, setChapters] = useState([
     {
@@ -305,12 +324,12 @@ export default function CoachCourseMaterialPage() {
       {/* LEFT SIDEBAR */}
       <div className="w-80 bg-white border-r border-neutral-200 flex flex-col shrink-0">
         <div className="p-6 border-b border-neutral-200">
-          <Link href="/coach/course" className="flex items-center gap-2 text-[#D47225] font-bold text-xs uppercase tracking-widest mb-6 hover:text-[#964B13] transition-colors">
+          <Link href={`/admin/courses/${params.id}/${params.bidangId}?name=${encodeURIComponent(bidangName)}`} className="flex items-center gap-2 text-[#D47225] font-bold text-xs uppercase tracking-widest mb-6 hover:text-[#964B13] transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             KEMBALI KE LIST COURSE
           </Link>
           <h2 className="font-black text-[#0B2545] uppercase tracking-wide leading-tight">
-            ADVANCED NEGOTIATION STRATEGY
+            {courseTitle}
           </h2>
         </div>
 
@@ -420,7 +439,7 @@ export default function CoachCourseMaterialPage() {
         {/* Top Header */}
         <div className="px-8 py-4 flex items-center justify-between border-b border-neutral-200 shrink-0 bg-white z-10">
           <div className="text-[10px] md:text-xs font-bold text-neutral-500">
-            <Link href="/coach/course" className="hover:text-[#D47225]">Program</Link> &gt; ... &gt; <span className="text-[#0B2545] font-black">Course Advanced Negotiation Strategy</span>
+            <Link href={`/admin/courses/${params.id}/${params.bidangId}?name=${encodeURIComponent(bidangName)}`} className="hover:text-[#D47225]">Program</Link> &gt; ... &gt; <span className="text-[#0B2545] font-black">Course {courseTitle}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative hidden md:block">
