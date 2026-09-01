@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function BlogDetail({ params }: { params: { slug: string } }) {
+export default function BlogDetail() {
   // In a real app, you would fetch the blog post data based on params.slug.
   // For this demonstration, we'll display a rich, static layout matching the design.
 

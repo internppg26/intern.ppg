@@ -19,7 +19,13 @@ export default function LoginPage() {
     // Simulate API call
     setTimeout(() => {
       setLoading(false);
-      router.push('/dashboard');
+      if (email.toLowerCase().startsWith('admin')) {
+        router.push('/admin');
+      } else if (email.toLowerCase().includes('coach') || email.toLowerCase().includes('instruktur')) {
+        router.push('/coach');
+      } else {
+        router.push('/dashboard');
+      }
     }, 1000);
 =======
     
