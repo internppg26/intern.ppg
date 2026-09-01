@@ -3,13 +3,15 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #00a0d2;
-  --primary-dark: #0080a8;
+  --primary: #e58d11;       /* Orange from the design */
+  --primary-dark: #c87609;
+  --brand-dark: #0f3945;    /* Dark teal/navy for footer */
+  --bg-beige: #faefdb;      /* Light beige background for sections */
   --secondary: #fac878;
   --secondary-dark: #e6b050;
   --neutral-dark: #323232;
   --neutral-light: #f0f0f0;
-  --neutral-gray: #aaaaaa;
+  --neutral-gray: #71717a;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -19,11 +21,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-inter);
   
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-brand-dark: var(--brand-dark);
+  --color-bg-beige: var(--bg-beige);
   --color-secondary: var(--secondary);
   --color-secondary-dark: var(--secondary-dark);
   --color-neutral-dark: var(--neutral-dark);
@@ -33,6 +37,13 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  
+  --animate-marquee: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,5 +56,4 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
