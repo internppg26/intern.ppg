@@ -16,9 +16,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser);
-          if (user.name) setUserName(user.name);
-          if (user.email) setUserEmail(user.email);
-          if (user.avatar) setUserAvatar(user.avatar);
+          setUserName(user.name || 'User');
+          setUserEmail(user.email || '');
+          setUserAvatar(user.avatar || '');
         } catch (e) {
           console.error('Error parsing user data', e);
         }
