@@ -71,6 +71,10 @@ app.use('/api/exams', examRouter);
 const certificateRouter = require('./routes/certificate');
 app.use('/api/certificates', certificateRouter);
 
+// Schedule routes
+const scheduleRouter = require('./routes/schedule');
+app.use('/api/schedules', scheduleRouter);
+
 // Sync database and start server
 async function start() {
   try {
