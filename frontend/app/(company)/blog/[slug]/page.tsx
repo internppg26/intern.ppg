@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function BlogDetail({ params }: { params: { slug: string } }) {
+export default function BlogDetail(props: { params: Promise<{ slug: string }> }) {
+  const params = React.use(props.params);
   const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,10 +13,20 @@ export default function BlogDetail({ params }: { params: { slug: string } }) {
         const res = await fetch(`/api/articles/${params.slug}`);
         if (res.ok) {
           const data = await res.json();
+          let parsedDesc = data.content;
+          let blocks = [];
+          try {
+            const parsed = JSON.parse(data.content);
+            if (parsed && typeof parsed === 'object') {
+              parsedDesc = parsed.desc || '';
+              blocks = parsed.blocks || [];
+            }
+          } catch(e) {}
           setArticle({
             id: data.id,
             title: data.title,
-            desc: data.content,
+            desc: parsedDesc,
+            blocks: blocks,
             tag: (data.category || 'NEWS').toUpperCase(),
             image: data.thumbnail || '/Logo_Performa_Puncak.png',
             date: new Date(data.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
@@ -87,8 +98,18 @@ export default function BlogDetail({ params }: { params: { slug: string } }) {
         )}
 
         {/* Article Body */}
-        <div className="prose prose-lg max-w-none text-neutral-700 whitespace-pre-wrap">
-          {article.desc}
+        <div className="max-w-none text-neutral-700">
+          {article.blocks && article.blocks.length > 0 && article.blocks[0].content !== '' ? (
+            article.blocks.map((block: any) => {
+              if (block.type === 'text' || block.type === 'empty') return <p key={block.id} className="mb-4 whitespace-pre-wrap text-lg leading-relaxed">{block.content}</p>;
+              if (block.type === 'h1') return <h1 key={block.id} className="text-3xl font-black mt-8 mb-4 text-[#0B2545]">{block.content}</h1>;
+              if (block.type === 'h2') return <h2 key={block.id} className="text-2xl font-bold mt-6 mb-3 text-[#0B2545]">{block.content}</h2>;
+              if (block.type === 'embed_video') return <img key={block.id} src={block.content} alt="embed" className="w-full my-8 rounded-xl shadow-sm border border-neutral-100" />;
+              return null;
+            })
+          ) : (
+            <div className="whitespace-pre-wrap text-lg leading-relaxed">{article.desc}</div>
+          )}
         </div>
       </article>
       

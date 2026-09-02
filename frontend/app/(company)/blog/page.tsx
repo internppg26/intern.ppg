@@ -21,17 +21,26 @@ export default function BlogPage() {
         const res = await fetch('/api/articles');
         if (res.ok) {
           const data = await res.json();
-          const mapped = data.map((a: any) => ({
-            id: a.id,
-            slug: a.id.toString(), // or real slug if added
-            tag: (a.category || 'NEWS').toUpperCase(),
-            date: new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
-            title: a.title,
-            description: a.content,
-            image: a.thumbnail || '/Logo_Performa_Puncak.png',
-            linkText: 'READ MORE',
-            isTopNews: a.isTopNews
-          }));
+          const mapped = data.map((a: any) => {
+            let desc = a.content;
+            try {
+              const parsed = JSON.parse(a.content);
+              if (parsed && typeof parsed === 'object' && parsed.desc !== undefined) {
+                desc = parsed.desc;
+              }
+            } catch(e) {}
+            return {
+              id: a.id,
+              slug: a.id.toString(), // or real slug if added
+              tag: (a.category || 'NEWS').toUpperCase(),
+              date: new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
+              title: a.title,
+              description: desc,
+              image: a.thumbnail || '/Logo_Performa_Puncak.png',
+              linkText: 'READ MORE',
+              isTopNews: a.isTopNews
+            };
+          });
           
           setArticles(mapped); // ALL posts in grid
           setTopArticles(mapped.filter((a: any) => a.isTopNews));

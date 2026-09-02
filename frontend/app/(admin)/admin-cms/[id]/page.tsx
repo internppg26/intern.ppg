@@ -34,18 +34,32 @@ function AdminCMSDetailContent() {
         .then(data => {
           if (data && data.title) {
             setTitle(data.title);
-            setDesc(data.content || '');
+            let parsedDesc = data.content || '';
+            let parsedBlocks = [{ id: '1', type: 'empty', content: '' }];
+            try {
+              const parsed = JSON.parse(data.content);
+              if (parsed && typeof parsed === 'object') {
+                parsedDesc = parsed.desc || '';
+                if (parsed.blocks && parsed.blocks.length > 0) {
+                  parsedBlocks = parsed.blocks;
+                }
+              }
+            } catch (e) {}
+            
+            setDesc(parsedDesc);
             setTag(data.category || 'NEWS');
             setCoverImage(data.thumbnail !== '/Logo_Performa_Puncak.png' ? data.thumbnail : '');
+            
+            setBlocks(parsedBlocks);
+            setHistory([JSON.parse(JSON.stringify(parsedBlocks))]);
           }
         })
         .catch(err => console.error('Failed to load article:', err));
+    } else {
+      const initialBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
+      setBlocks(initialBlocks);
+      setHistory([JSON.parse(JSON.stringify(initialBlocks))]);
     }
-    
-    // Always initialize blocks as empty
-    const initialBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
-    setBlocks(initialBlocks);
-    setHistory([JSON.parse(JSON.stringify(initialBlocks))]);
   }, [params.id, searchParams]);
 
   const [showSlashMenu, setShowSlashMenu] = useState<string | null>(null);
@@ -412,7 +426,7 @@ function AdminCMSDetailContent() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       title: title,
-                      content: desc,
+                      content: JSON.stringify({ desc: desc, blocks: blocks }),
                       category: tag.toUpperCase(),
                       thumbnail: coverImage || '/Logo_Performa_Puncak.png'
                     })
