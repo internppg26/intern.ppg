@@ -23,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${poppins.variable} ${inter.variable} h-full antialiased`}
+      style={{ colorScheme: 'light' }}
     >
       <body className="min-h-full flex flex-col">
         {children}
