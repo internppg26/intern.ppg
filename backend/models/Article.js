@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
     thumbnail: {
       type: DataTypes.STRING,
     },
+    isTopNews: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     status: {
       type: DataTypes.ENUM('draft', 'published', 'archived'),
       defaultValue: 'draft',

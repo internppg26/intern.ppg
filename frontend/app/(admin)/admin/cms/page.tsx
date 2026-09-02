@@ -4,47 +4,91 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function AdminCMSPage() {
-  const [articles, setArticles] = React.useState([
-    { id: 1, tag: 'STRATEGY', date: 'OCT 26, 2024', title: 'NAVIGATING EXPONENTIAL GROWTH FOR TECH STARTUPS', desc: 'The landscape for early-stage companies is shifting. We explore how to maintain culture during rapid expansion phases.', image: '/Logo_Performa_Puncak.png' },
-    { id: 2, tag: 'EDUCATION', date: 'OCT 20, 2024', title: 'UPCOMING EXECUTIVE LEADERSHIP WORKSHOP', desc: 'Join our network of elite professionals for a three-day intensive on disruptive leadership in the digital era.', image: '/Logo_Performa_Puncak.png' },
-    { id: 3, tag: 'INSIGHTS', date: 'SEP 28, 2024', title: 'BUILDING SUSTAINABLE TECH ECOSYSTEMS', desc: 'Sustainability is no longer optional. How modern corporations are integrating ESG into their core tech stack.', image: '/Logo_Performa_Puncak.png' },
-    { id: 4, tag: 'WORK', date: 'SEP 14, 2024', title: 'THE FUTURE OF HYBRID COLLABORATION', desc: 'New tools and methodologies for keeping distributed teams engaged and productive in 2025.', image: '/Logo_Performa_Puncak.png' },
-    { id: 5, tag: 'UPDATES', date: 'SEP 02, 2024', title: 'Q3 PLATFORM MAINTENANCE SCHEDULE', desc: 'Essential updates on our LMS infrastructure and planned downtime for performance optimization.', image: '/Logo_Performa_Puncak.png' },
-    { id: 6, tag: 'RESOURCES', date: 'AUG 20, 2024', title: 'TOP 10 PRODUCTIVITY TOOLS FOR LEADERS', desc: 'Our curated list of software that top-tier executives use to streamline their daily workflows.', image: '/Logo_Performa_Puncak.png' },
-    { id: 7, tag: 'STRATEGY', date: 'OCT 26, 2024', title: 'NAVIGATING EXPONENTIAL GROWTH FOR TECH STARTUPS', desc: 'The landscape for early-stage companies is shifting. We explore how to maintain culture during rapid expansion phases.', image: '/Logo_Performa_Puncak.png' },
-    { id: 8, tag: 'EDUCATION', date: 'OCT 20, 2024', title: 'UPCOMING EXECUTIVE LEADERSHIP WORKSHOP', desc: 'Join our network of elite professionals for a three-day intensive on disruptive leadership in the digital era.', image: '/Logo_Performa_Puncak.png' },
-    { id: 9, tag: 'INSIGHTS', date: 'SEP 28, 2024', title: 'BUILDING SUSTAINABLE TECH ECOSYSTEMS', desc: 'Sustainability is no longer optional. How modern corporations are integrating ESG into their core tech stack.', image: '/Logo_Performa_Puncak.png' },
-  ]);
+  const [articles, setArticles] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState('');
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [modalData, setModalData] = React.useState({ judul: '', caption: '', tag: '', image: '' });
+  const [editId, setEditId] = React.useState<number | null>(null);
+  
   const [isSelectingTopNews, setIsSelectingTopNews] = React.useState(false);
-  const [topNewsId, setTopNewsId] = React.useState(1);
+  const [topNewsIds, setTopNewsIds] = React.useState<number[]>([]);
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [selectedFilterTag, setSelectedFilterTag] = React.useState('ALL POSTS');
 
-  React.useEffect(() => {
-    const saved = localStorage.getItem('cms_articles');
-    if (saved) {
-      setArticles(JSON.parse(saved));
-    } else {
-      localStorage.setItem('cms_articles', JSON.stringify(articles));
+  const fetchArticles = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/articles');
+      if (!res.ok) throw new Error('Gagal memuat berita');
+      const data = await res.json();
+      // Map API response to match frontend expectations
+      const mapped = data.map((a: any) => ({
+        id: a.id,
+        tag: (a.category || 'NEWS').toUpperCase(),
+        date: new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
+        title: a.title,
+        desc: a.content,
+        image: a.thumbnail || '/Logo_Performa_Puncak.png',
+        isTopNews: a.isTopNews
+      }));
+      setArticles(mapped);
+      
+      // Set initial top news ids
+      const topNews = mapped.filter((a: any) => a.isTopNews).map((a: any) => a.id);
+      setTopNewsIds(topNews);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const isInitialMount = React.useRef(true);
   React.useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    localStorage.setItem('cms_articles', JSON.stringify(articles));
+    fetchArticles();
+  }, [fetchArticles]);
+
+  // Extract unique tags from articles
+  const uniqueTags = React.useMemo(() => {
+    const tags = articles.map(a => a.tag);
+    return Array.from(new Set(tags)).filter(Boolean);
   }, [articles]);
+
+  // Slideshow auto-play
+  React.useEffect(() => {
+    if (topNewsIds.length <= 1 || isSelectingTopNews) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % topNewsIds.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [topNewsIds.length, isSelectingTopNews]);
+
+  const handleSaveTopNews = async () => {
+    try {
+      const res = await fetch('/api/articles/top-news', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleIds: topNewsIds })
+      });
+      if (!res.ok) throw new Error('Gagal menyimpan Top News');
+      setIsSelectingTopNews(false);
+      fetchArticles(); // Refresh
+      setCurrentSlide(0);
+    } catch (err) {
+      alert('Gagal menyimpan Top News');
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setModalData({ ...modalData, image: imageUrl });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setModalData({...modalData, image: reader.result as string});
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -52,10 +96,11 @@ export default function AdminCMSPage() {
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 6;
 
-  const filteredArticles = articles.filter(article => 
-    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.tag.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) || article.tag.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTag = selectedFilterTag === 'ALL POSTS' || article.tag === selectedFilterTag;
+    return matchesSearch && matchesTag;
+  });
 
   const totalPages = Math.ceil(filteredArticles.length / itemsPerPage) || 1;
   const paginatedArticles = filteredArticles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -102,33 +147,82 @@ export default function AdminCMSPage() {
             BLOG, NEWS & <span className="text-[#E5832E]">INSIGHTS</span>
           </h1>
           <button 
-            onClick={() => setIsSelectingTopNews(!isSelectingTopNews)}
+            onClick={() => {
+              if (isSelectingTopNews) {
+                handleSaveTopNews();
+              } else {
+                setIsSelectingTopNews(true);
+              }
+            }}
             className={`${isSelectingTopNews ? 'bg-[#f59e0b] text-white hover:bg-[#d97706] border-[#f59e0b]' : 'border-2 border-[#f59e0b] text-[#f59e0b] hover:bg-[#fffbeb]'} border-2 px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-colors shrink-0`}
           >
-            {isSelectingTopNews ? 'SIMPAN TOP NEWS' : 'GANTI TOP NEWS'}
+            {isSelectingTopNews ? `SIMPAN TOP NEWS (${topNewsIds.length}/5)` : 'GANTI TOP NEWS'}
           </button>
         </div>
 
-        {/* Hero Section */}
         {(() => {
-          const topNews = articles.find(a => a.id === topNewsId) || articles[0] || { tag: 'STRATEGY', title: 'HOW STRATEGIC CONSULTING DRIVES OPERATIONAL EXCELLENCE IN MODERN TECH', desc: 'Discover the core principles of transformation that are helping global leaders scale their operations while maintaining elite performance standards.', image: '/Logo_Performa_Puncak.png', id: 1 };
+          const topArticles = articles.filter(a => topNewsIds.includes(a.id));
+          
+          if (topArticles.length === 0) {
+            return (
+              <div className="relative rounded-3xl overflow-hidden bg-[#0B2545] text-white min-h-[400px] flex items-center justify-center p-10 lg:p-16 mb-12 shadow-lg border border-neutral-100">
+                <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M20%200L40%2020L20%2040L0%2020L20%200Z%22%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.1%22%2F%3E%3C%2Fsvg%3E')]"></div>
+                <div className="text-center z-10">
+                  <h2 className="text-3xl lg:text-4xl font-black uppercase tracking-widest text-white/50">Belum Ada Top News</h2>
+                </div>
+              </div>
+            );
+          }
+
+          const currentTopNews = topArticles[currentSlide % topArticles.length];
           return (
-            <div className="relative rounded-3xl overflow-hidden bg-[#0A3042] text-white min-h-[400px] flex items-center p-10 lg:p-16 mb-12 shadow-lg">
-              {topNews.image && topNews.image !== '/Logo_Performa_Puncak.png' && (
-                 <img src={topNews.image} alt={topNews.title} className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" />
+            <div className="relative rounded-3xl overflow-hidden bg-[#0B2545] text-white min-h-[400px] flex items-center p-10 lg:p-16 mb-12 shadow-lg group">
+              {currentTopNews.image && currentTopNews.image !== '/Logo_Performa_Puncak.png' && (
+                 <img src={currentTopNews.image} alt={currentTopNews.title} className="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500" />
               )}
+              {/* Gradient overlay so text is readable */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0B2545]/95 via-[#0B2545]/80 to-[#0B2545]/30 z-0"></div>
               {/* Background pattern/image mock */}
               <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M20%200L40%2020L20%2040L0%2020L20%200Z%22%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.1%22%2F%3E%3C%2Fsvg%3E')]"></div>
               
-              <div className="relative z-10 max-w-2xl">
-                <span className="inline-block bg-[#E5832E] text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6">{topNews.tag}</span>
+              {/* Slideshow Controls */}
+              {!isSelectingTopNews && topArticles.length > 1 && (
+                <>
+                  <button 
+                    onClick={() => setCurrentSlide((prev) => (prev - 1 + topArticles.length) % topArticles.length)}
+                    className="absolute left-4 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSlide((prev) => (prev + 1) % topArticles.length)}
+                    className="absolute right-4 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                  
+                  {/* Indicators */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                    {topArticles.map((_, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-[#E5832E] w-6' : 'bg-white/50 hover:bg-white'}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div className="relative z-10 max-w-2xl animate-in slide-in-from-bottom-4 duration-500 fade-in">
+                <span className="inline-block bg-[#E5832E] text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-6">{currentTopNews.tag}</span>
                 <h2 className="text-4xl lg:text-5xl font-black uppercase tracking-tight leading-[1.1] mb-6">
-                  {topNews.title}
+                  {currentTopNews.title}
                 </h2>
-                <p className="text-sm text-white/80 leading-relaxed mb-8 max-w-xl">
-                  {topNews.desc}
+                <p className="text-sm text-white/80 leading-relaxed mb-8 max-w-xl line-clamp-3">
+                  {currentTopNews.desc}
                 </p>
-                <Link href={`/admin-cms/${topNews.id}?title=${encodeURIComponent(topNews.title || '')}&tag=${encodeURIComponent(topNews.tag || '')}&desc=${encodeURIComponent(topNews.desc || '')}&image=${encodeURIComponent(topNews.image || '')}`} className="inline-block bg-[#E5832E] hover:bg-[#D47225] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors">
+                <Link href={`/admin-cms/${currentTopNews.id}?title=${encodeURIComponent(currentTopNews.title || '')}&tag=${encodeURIComponent(currentTopNews.tag || '')}&desc=${encodeURIComponent(currentTopNews.desc || '')}&image=${encodeURIComponent(currentTopNews.image || '')}`} className="inline-block bg-[#E5832E] hover:bg-[#D47225] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors">
                   Buka Detail
                 </Link>
               </div>
@@ -139,15 +233,21 @@ export default function AdminCMSPage() {
         {/* Filters and Add Article Row */}
         <div className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-10">
           <div className="flex flex-wrap gap-3">
-            <button className="bg-[#0B2545] text-white px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
+            <button 
+              onClick={() => setSelectedFilterTag('ALL POSTS')}
+              className={`${selectedFilterTag === 'ALL POSTS' ? 'bg-[#0B2545] text-white' : 'bg-[#FAF7F2] text-[#0B2545] hover:bg-[#F0EBE1] border border-[#F0EBE1]'} px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors`}
+            >
               ALL POSTS
             </button>
-            <button className="bg-[#FAF7F2] text-[#0B2545] hover:bg-[#F0EBE1] border border-[#F0EBE1] px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">
-              CASE STUDIES
-            </button>
-            <button className="bg-[#FAF7F2] text-[#0B2545] hover:bg-[#F0EBE1] border border-[#F0EBE1] px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">
-              TRAINING UPDATES
-            </button>
+            {uniqueTags.map(tag => (
+              <button 
+                key={tag}
+                onClick={() => setSelectedFilterTag(tag)}
+                className={`${selectedFilterTag === tag ? 'bg-[#0B2545] text-white' : 'bg-[#FAF7F2] text-[#0B2545] hover:bg-[#F0EBE1] border border-[#F0EBE1]'} px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
           
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full lg:w-auto">
@@ -177,22 +277,45 @@ export default function AdminCMSPage() {
 
         {/* Article Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 mb-16">
-          {paginatedArticles.length > 0 ? paginatedArticles.map((article) => (
+          {loading ? (
+            <div className="col-span-full py-12 text-center text-neutral-400 font-medium">Memuat berita...</div>
+          ) : error ? (
+            <div className="col-span-full py-12 text-center text-red-500 font-medium">{error}</div>
+          ) : paginatedArticles.length > 0 ? paginatedArticles.map((article) => (
             <div key={article.id} className="flex flex-col group cursor-pointer">
               <div className="rounded-2xl overflow-hidden mb-5 bg-[#0B2545] aspect-video relative flex items-center justify-center border border-neutral-100 shadow-sm group-hover:shadow-md transition-all">
                 {/* Delete Button */}
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm("Apakah Anda yakin ingin menghapus berita ini?")) {
-                      setArticles(articles.filter(a => a.id !== article.id));
-                    }
-                  }}
-                  className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20"
-                  title="Hapus Berita"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
+                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditId(article.id);
+                      setModalData({ judul: article.title, caption: article.desc, tag: article.tag, image: article.image || '' });
+                      setIsModalOpen(true);
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-1.5 rounded-full shadow-md"
+                    title="Edit Judul & Cover"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  </button>
+                  <button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm("Apakah Anda yakin ingin menghapus berita ini?")) {
+                        try {
+                          const res = await fetch(`/api/articles/${article.id}`, { method: 'DELETE' });
+                          if (res.ok) fetchArticles();
+                        } catch (err) {
+                          alert('Gagal menghapus berita');
+                        }
+                      }
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-md"
+                    title="Hapus Berita"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
                 
                 <div className="absolute top-4 left-4 z-10">
                   <span className="bg-[#E5832E] text-white text-[8px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
@@ -219,12 +342,20 @@ export default function AdminCMSPage() {
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      setTopNewsId(article.id);
+                      if (topNewsIds.includes(article.id)) {
+                        setTopNewsIds(topNewsIds.filter(id => id !== article.id));
+                      } else {
+                        if (topNewsIds.length >= 5) {
+                          alert('Maksimal 5 Top News');
+                        } else {
+                          setTopNewsIds([...topNewsIds, article.id]);
+                        }
+                      }
                     }}
                     className="absolute right-0 top-0 transition-transform hover:scale-110 z-10"
                     title="Jadikan Top News"
                   >
-                    {topNewsId === article.id ? (
+                    {topNewsIds.includes(article.id) ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="transparent"></rect><polyline points="8 12 11 15 16 9"></polyline></svg>
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
@@ -394,10 +525,23 @@ export default function AdminCMSPage() {
                 <input 
                   type="text" 
                   value={modalData.tag}
-                  onChange={(e) => setModalData({...modalData, tag: e.target.value})}
-                  placeholder="Isi tag"
+                  onChange={(e) => setModalData({...modalData, tag: e.target.value.toUpperCase()})}
+                  placeholder="Isi tag (contoh: STRATEGY)"
                   className="w-full border border-neutral-300 rounded-md px-3 py-2 text-xs text-[#0B2545] outline-none transition-colors focus:border-[#0B2545]"
                 />
+                {uniqueTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {uniqueTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setModalData({...modalData, tag})}
+                        className="bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-[9px] px-2 py-1 rounded-full font-medium transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -426,17 +570,33 @@ export default function AdminCMSPage() {
               {/* Action Buttons */}
               <div className="pt-3 flex flex-col gap-2">
                 <button 
-                  onClick={() => {
-                    const newArticle = {
-                      id: Date.now(),
-                      tag: modalData.tag || 'NEWS',
-                      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
-                      title: modalData.judul || 'UNTITLED ARTICLE',
-                      desc: modalData.caption || 'No description provided.',
-                      image: modalData.image || '/Logo_Performa_Puncak.png'
-                    };
-                    setArticles([newArticle, ...articles]);
-                    setIsModalOpen(false);
+                  onClick={async () => {
+                    if (!modalData.judul || !modalData.caption) {
+                      alert('Judul dan caption harus diisi');
+                      return;
+                    }
+                    try {
+                      const url = editId ? `/api/articles/${editId}` : '/api/articles';
+                      const method = editId ? 'PUT' : 'POST';
+                      const res = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: modalData.judul,
+                          content: modalData.caption,
+                          category: modalData.tag || 'NEWS',
+                          thumbnail: modalData.image || '/Logo_Performa_Puncak.png'
+                        })
+                      });
+                      if (res.ok) {
+                        fetchArticles();
+                        setIsModalOpen(false);
+                      } else {
+                        throw new Error(editId ? 'Gagal mengedit berita' : 'Gagal menambah berita');
+                      }
+                    } catch (err) {
+                      alert(editId ? 'Gagal mengedit berita' : 'Gagal menambah berita');
+                    }
                   }}
                   className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white text-xs font-bold py-2.5 rounded-md transition-colors"
                 >
@@ -446,7 +606,7 @@ export default function AdminCMSPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="w-full bg-white hover:bg-red-50 text-red-500 border border-red-200 hover:border-red-500 text-xs font-bold py-2.5 rounded-md transition-colors"
                 >
-                  Hapus
+                  Batal
                 </button>
               </div>
             </div>
