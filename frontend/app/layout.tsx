@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "PT. Performa Puncak Group - Sistem Manajemen Pembelajaran (LMS) dan Company Profile",
 };
 
+import Providers from "./Providers";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -25,7 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${poppins.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
