@@ -25,15 +25,24 @@ export default function AdminCMSPage() {
       if (!res.ok) throw new Error('Gagal memuat berita');
       const data = await res.json();
       // Map API response to match frontend expectations
-      const mapped = data.map((a: any) => ({
-        id: a.id,
-        tag: (a.category || 'NEWS').toUpperCase(),
-        date: new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
-        title: a.title,
-        desc: a.content,
-        image: a.thumbnail || '/Logo_Performa_Puncak.png',
-        isTopNews: a.isTopNews
-      }));
+      const mapped = data.map((a: any) => {
+        let desc = a.content;
+        try {
+          const parsed = JSON.parse(a.content);
+          if (parsed && typeof parsed === 'object' && parsed.desc !== undefined) {
+            desc = parsed.desc;
+          }
+        } catch(e) {}
+        return {
+          id: a.id,
+          tag: (a.category || 'NEWS').toUpperCase(),
+          date: new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(),
+          title: a.title,
+          desc: desc,
+          image: a.thumbnail || '/Logo_Performa_Puncak.png',
+          isTopNews: a.isTopNews
+        };
+      });
       setArticles(mapped);
       
       // Set initial top news ids
@@ -222,7 +231,7 @@ export default function AdminCMSPage() {
                 <p className="text-sm text-white/80 leading-relaxed mb-8 max-w-xl line-clamp-3">
                   {currentTopNews.desc}
                 </p>
-                <Link href={`/admin-cms/${currentTopNews.id}?title=${encodeURIComponent(currentTopNews.title || '')}&tag=${encodeURIComponent(currentTopNews.tag || '')}&desc=${encodeURIComponent(currentTopNews.desc || '')}&image=${encodeURIComponent(currentTopNews.image || '')}`} className="inline-block bg-[#E5832E] hover:bg-[#D47225] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors">
+                <Link href={`/admin-cms/${currentTopNews.id}`} className="inline-block bg-[#E5832E] hover:bg-[#D47225] text-white px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-colors">
                   Buka Detail
                 </Link>
               </div>
@@ -372,7 +381,7 @@ export default function AdminCMSPage() {
                   {article.desc}
                 </p>
                 <div>
-                  <Link href={`/admin-cms/${article.id}?title=${encodeURIComponent(article.title || '')}&tag=${encodeURIComponent(article.tag || '')}&desc=${encodeURIComponent(article.desc || '')}&image=${encodeURIComponent(article.image || '')}`} className="bg-[#E5832E] text-white px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors hover:bg-[#D47225] inline-block">
+                  <Link href={`/admin-cms/${article.id}`} className="bg-[#E5832E] text-white px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors hover:bg-[#D47225] inline-block">
                     BUKA DETAIL
                   </Link>
                 </div>
@@ -583,7 +592,7 @@ export default function AdminCMSPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           title: modalData.judul,
-                          content: modalData.caption,
+                          content: JSON.stringify({ desc: modalData.caption, blocks: [{ id: '1', type: 'empty', content: '' }] }),
                           category: modalData.tag || 'NEWS',
                           thumbnail: modalData.image || '/Logo_Performa_Puncak.png'
                         })
