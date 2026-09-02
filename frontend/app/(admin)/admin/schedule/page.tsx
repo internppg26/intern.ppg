@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 interface ScheduleEvent {
@@ -15,38 +15,27 @@ interface ScheduleEvent {
 }
 
 export default function AdminSchedulePage() {
-  const [events, setEvents] = useState<ScheduleEvent[]>([
-    {
-      id: 1,
-      title: 'Sesi Coaching: Agile Leadership',
-      desc: 'Pelatihan intensif untuk level manajerial mengenai kepemimpinan di era digital.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/1',
-      date: '2026-08-15',
-      time: '09:00',
-      location: 'Performa Puncak Group Office'
-    },
-    {
-      id: 2,
-      title: 'Pembukaan Pendaftaran: Course Komunikasi Bisnis',
-      desc: 'Periode pendaftaran batch 4 resmi dibuka.',
-      tag: 'Government',
-      link: 'https://performa.com/course/2',
-      date: '2026-08-22',
-      time: '08:00',
-      location: 'Online'
-    },
-    {
-      id: 3,
-      title: 'Public Training: Design Thinking',
-      desc: 'Workshop offline 2 hari penuh.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/3',
-      date: '2026-09-05',
-      time: '10:00',
-      location: 'Aston Hotel'
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSchedules = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/schedules');
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch schedules:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  }, []);
+
+  useEffect(() => {
+    fetchSchedules();
+  }, [fetchSchedules]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -54,6 +43,7 @@ export default function AdminSchedulePage() {
   const [selectedMonth, setSelectedMonth] = useState('Select Month');
   const [selectedProgram, setSelectedProgram] = useState('Select Program');
   const [visibleCount, setVisibleCount] = useState(3);
+  const [saving, setSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -97,22 +87,59 @@ export default function AdminSchedulePage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingId) {
-      setEvents(events.map(ev => ev.id === editingId ? { ...formData, id: editingId } : ev));
-    } else {
-      const newEvent = {
-        ...formData,
-        id: Date.now()
-      };
-      setEvents([...events, newEvent]);
-    }
-    setIsModalOpen(false);
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
-      setEvents(events.filter(ev => ev.id !== id));
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const url = editingId ? `/api/schedules/${editingId}` : '/api/schedules';
+      const method = editingId ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(formData)
+      });
+
+      if (res.ok) {
+        setIsModalOpen(false);
+        await fetchSchedules();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal menyimpan jadwal');
+      }
+    } catch (error) {
+      console.error('Save schedule error:', error);
+      alert('Gagal menyimpan jadwal. Pastikan server backend berjalan.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) return;
+    
+    try {
+      const res = await fetch(`/api/schedules/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      if (res.ok) {
+        await fetchSchedules();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal menghapus jadwal');
+      }
+    } catch (error) {
+      console.error('Delete schedule error:', error);
+      alert('Gagal menghapus jadwal. Pastikan server backend berjalan.');
     }
   };
 
@@ -484,9 +511,10 @@ export default function AdminSchedulePage() {
               </button>
               <button 
                 onClick={handleSave}
-                className="bg-[#0D47A1] hover:bg-[#1565C0] text-white px-6 py-2.5 rounded text-xs font-bold transition-colors"
+                disabled={saving}
+                className="bg-[#0D47A1] hover:bg-[#1565C0] text-white px-6 py-2.5 rounded text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Simpan Jadwal
+                {saving ? 'Menyimpan...' : 'Simpan Jadwal'}
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 interface ScheduleEvent {
   id: number;
@@ -14,38 +14,30 @@ interface ScheduleEvent {
 }
 
 export default function PublicSchedulePage() {
-  const [events] = useState<ScheduleEvent[]>([
-    {
-      id: 1,
-      title: 'Sesi Coaching: Agile Leadership',
-      desc: 'Pelatihan intensif untuk level manajerial mengenai kepemimpinan di era digital.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/1',
-      date: '2026-08-15',
-      time: '09:00',
-      location: 'Performa Puncak Group Office'
-    },
-    {
-      id: 2,
-      title: 'Pembukaan Pendaftaran: Course Komunikasi Bisnis',
-      desc: 'Periode pendaftaran batch 4 resmi dibuka.',
-      tag: 'Government',
-      link: 'https://performa.com/course/2',
-      date: '2026-08-22',
-      time: '08:00',
-      location: 'Online'
-    },
-    {
-      id: 3,
-      title: 'Public Training: Design Thinking',
-      desc: 'Workshop offline 2 hari penuh.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/3',
-      date: '2026-09-05',
-      time: '10:00',
-      location: 'Aston Hotel'
-    }
-  ]);
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/schedules');
+        if (res.ok) {
+          const data = await res.json();
+          setEvents(data);
+        } else {
+          setError('Gagal memuat jadwal');
+        }
+      } catch (err) {
+        console.error('Failed to fetch schedules:', err);
+        setError('Gagal memuat jadwal. Pastikan server berjalan.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSchedules();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('Select Month');
@@ -160,6 +152,16 @@ export default function PublicSchedulePage() {
         </div>
 
         {/* Schedule List */}
+        {loading && (
+          <div className="text-center py-12 text-neutral-500">
+            <p>Memuat jadwal...</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-12 text-red-500">
+            <p>{error}</p>
+          </div>
+        )}
         <div className="space-y-12 mb-16">
           {Object.entries(groupedEvents.groups).map(([groupKey, groupEventsList]) => (
             <div key={groupKey}>

@@ -16,6 +16,7 @@ const Gallery = require('./Gallery')(sequelize, DataTypes);
 const File = require('./File')(sequelize, DataTypes);
 const Exam = require('./Exam')(sequelize, DataTypes);
 const Certificate = require('./Certificate')(sequelize, DataTypes);
+const Schedule = require('./Schedule')(sequelize, DataTypes);
 
 // Associations
 User.hasMany(Enrollment, { foreignKey: 'studentId' });
@@ -65,6 +66,7 @@ const db = {
   File,
   Exam,
   Certificate,
+  Schedule,
 };
 
 module.exports = db;
