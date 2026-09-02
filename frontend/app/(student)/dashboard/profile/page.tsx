@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export default function ProfilePage() {
     
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/auth/change-password', {
+      const res = await fetch('/api/auth/change-password', {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ export default function ProfilePage() {
     
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const res = await fetch('/api/auth/me', {
         method: 'DELETE',
         headers: { 
           'Authorization': `Bearer ${token}`
