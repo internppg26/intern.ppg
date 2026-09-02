@@ -29,18 +29,14 @@ export default function ProfilePage() {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        if (user.name) setName(user.name);
-        if (user.email) setEmail(user.email);
-        if (user.instansi) setInstansi(user.instansi);
-        if (user.phone) setPhone(user.phone);
+        setName(user.name || '');
+        setEmail(user.email || '');
+        setPhone(user.phone || '');
+        setInstansi(user.instansi || '');
         if (user.avatar) setAvatarUrl(user.avatar);
       } catch (e) {
-        console.error(e);
+        console.error('Error parsing user data', e);
       }
-    }
-    const demoPass = localStorage.getItem('demo_password');
-    if (demoPass) {
-      setCurrentPassword(demoPass);
     }
   }, []);
 
@@ -100,11 +96,10 @@ export default function ProfilePage() {
       });
       
       if (res.ok) {
-        localStorage.setItem('demo_password', newPassword);
-        setCurrentPassword(newPassword);
+        alert('Password berhasil diperbarui');
+        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
-        alert('Password berhasil diperbarui');
       } else {
         const err = await res.json();
         alert(err.error || 'Gagal memperbarui password');

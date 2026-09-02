@@ -8,6 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [userName, setUserName] = React.useState('Alex Morgan');
   const [userEmail, setUserEmail] = React.useState('alexmorgan@gmail.com');
+  const [userAvatar, setUserAvatar] = React.useState('');
 
   React.useEffect(() => {
     const fetchUser = () => {
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const user = JSON.parse(savedUser);
           if (user.name) setUserName(user.name);
           if (user.email) setUserEmail(user.email);
+          if (user.avatar) setUserAvatar(user.avatar);
         } catch (e) {
           console.error('Error parsing user data', e);
         }
@@ -44,8 +46,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* User Profile */}
         <div className="px-6 py-4 mb-4">
           <div className="bg-[#13325B] border border-white/10 rounded-xl p-6 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
-            <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3 overflow-hidden">
+              {userAvatar ? (
+                <img src={userAvatar} alt="User Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              )}
             </div>
             <h3 className="font-bold text-base">{userName}</h3>
             <p className="text-xs text-white/60 truncate max-w-[150px]">{userEmail}</p>
