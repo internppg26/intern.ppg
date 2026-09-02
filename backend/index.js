@@ -80,13 +80,13 @@ async function start() {
   try {
     await db.sequelize.authenticate();
     console.log('Database connected.');
-    if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: false }).catch(err => {
-        console.error('Database sync error:', err);
-        // Continue without sync
-      });
-      console.log('Database synced (no alter).');
-    }
+    
+    // Always sync in dev for now
+    await db.sequelize.sync({ alter: true }).catch(err => {
+      console.error('Database sync error:', err);
+    });
+    console.log('Database synced (alter: true).');
+    
     const server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
