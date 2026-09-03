@@ -16,35 +16,111 @@ interface Block {
 export default function CoachCourseMaterialPage() {
   const params = useParams();
   // Sidebar State
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: 'BAB 1 : FOUNDATION AND CORE PRINCIPLES',
-      isOpen: true,
-      subChapters: [
-        { id: 11, title: 'Sub-bab 1 : 5 Foundation', duration: '10', isActive: false, type: 'material' },
-        { id: 12, title: 'Sub-bab 2 : 6 Core Principles', duration: '15', isActive: true, type: 'material' },
-      ]
-    },
-    {
-      id: 2,
-      title: 'SEGMENT 2: MARKET ANALYSIS',
-      isOpen: true,
-      subChapters: []
-    },
-    {
-      id: 3,
-      title: 'SEGMENT 3: OPERATIONAL EXCELLENCE',
-      isOpen: true,
-      subChapters: []
-    },
-    {
-      id: 4,
-      title: 'SEGMENT 4: CONCLUSION',
-      isOpen: true,
-      subChapters: []
+  const [courseTitle, setCourseTitle] = useState('Loading...');
+  const [courseProgramName, setCourseProgramName] = useState('PROGRAM');
+  const [chapters, setChapters] = useState<any[]>([]);
+  const [rawDescription, setRawDescription] = useState<any>({});
+
+  useEffect(() => {
+    fetch(`/api/programs/${params?.id}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      setCourseTitle(data.title);
+      if (data.category) {
+        let progName = data.category.split('||')[0].replace(/ Program/gi, '');
+        setCourseProgramName(progName);
+      }
+      if (data.description) {
+        try {
+          const parsed = JSON.parse(data.description);
+          setRawDescription(parsed);
+          if (parsed.chapters && Array.isArray(parsed.chapters)) {
+            // Map chapters to ensure subChapters are objects and NOT active
+            const mappedChapters = parsed.chapters.map((ch: any) => ({
+              ...ch,
+              isOpen: ch.isExpanded !== undefined ? ch.isExpanded : true,
+              subChapters: (ch.subChapters || []).map((sub: any, sIdx: number) => {
+                if (typeof sub === 'string') {
+                  return { id: Date.now() + sIdx, title: sub, duration: '10', isActive: false, type: 'material', blocks: [] };
+                }
+                return { ...sub, isActive: false };
+              })
+            }));
+            setChapters(mappedChapters);
+          }
+          
+          if (parsed.overviewBlocks && Array.isArray(parsed.overviewBlocks)) {
+            setBlocks(parsed.overviewBlocks);
+            setHistory([parsed.overviewBlocks]);
+            setHistoryIndex(0);
+          } else {
+            const demoBlocks: Block[] = [
+              { id: '1', type: 'h1', content: 'Course Overview' },
+              { id: '2', type: 'text', content: 'Di sini Anda dapat menuliskan ringkasan materi dan tujuan pembelajaran untuk course ini.' }
+            ];
+            setBlocks(demoBlocks);
+            setHistory([demoBlocks]);
+            setHistoryIndex(0);
+          }
+        } catch(e) {}
+      }
+    });
+  }, [params?.id]);
+
+  const handleSimpan = async () => {
+    try {
+      // First, sync current blocks into the currently active sub-chapter
+      let currentChapters = [...chapters];
+      const activeChIndex = currentChapters.findIndex(c => c.subChapters.some(s => s.isActive));
+      if (activeChIndex !== -1) {
+        const activeSubIndex = currentChapters[activeChIndex].subChapters.findIndex(s => s.isActive);
+        if (activeSubIndex !== -1) {
+          currentChapters[activeChIndex].subChapters[activeSubIndex] = {
+            ...currentChapters[activeChIndex].subChapters[activeSubIndex],
+            blocks: [...blocks]
+          };
+          setChapters(currentChapters);
+        }
+      }
+
+      // Map chapters back to the format Detail Course expects (isExpanded, etc)
+      const chaptersToSave = currentChapters.map(ch => ({
+        id: ch.id,
+        title: ch.title,
+        isExpanded: ch.isOpen,
+        subChapters: ch.subChapters
+      }));
+
+      const newDescription = { 
+        ...rawDescription, 
+        chapters: chaptersToSave,
+        overviewBlocks: isOverviewActive ? blocks : rawDescription.overviewBlocks 
+      };
+      
+      // Update local rawDescription so it doesn't get lost
+      setRawDescription(newDescription);
+
+      const payload = { description: JSON.stringify(newDescription) };
+
+      const res = await fetch(`/api/programs/${params?.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        alert("Berhasil menyimpan silabus!");
+      } else {
+        alert("Gagal menyimpan.");
+      }
+    } catch (e) {
+      alert("Error saving: " + e);
     }
-  ]);
+  };
 
   // Main Content State
   const [blocks, setBlocks] = useState<Block[]>([
@@ -133,40 +209,43 @@ export default function CoachCourseMaterialPage() {
     saveToHistory(newBlocks);
   };
 
-  const handleSimulateSubBab1 = () => {
-    // Switch to Sub-bab 1 filled state
-    setChapters(chapters.map(c => ({
+  const handleSelectSubChapter = (chapterId: number, subId: number) => {
+    setIsOverviewActive(false);
+    
+    // First, save current blocks into the CURRENTLY active sub-chapter
+    let updatedChapters = [...chapters];
+    const activeChIndex = updatedChapters.findIndex(c => c.subChapters.some(s => s.isActive));
+    if (activeChIndex !== -1) {
+      const activeSubIndex = updatedChapters[activeChIndex].subChapters.findIndex(s => s.isActive);
+      if (activeSubIndex !== -1) {
+        updatedChapters[activeChIndex].subChapters[activeSubIndex] = {
+          ...updatedChapters[activeChIndex].subChapters[activeSubIndex],
+          blocks: [...blocks]
+        };
+      }
+    }
+
+    // Now, activate the new sub-chapter and load its blocks
+    let targetBlocks: Block[] = [{ id: Date.now().toString(), type: 'empty', content: '' }];
+    
+    updatedChapters = updatedChapters.map(c => ({
       ...c,
-      subChapters: c.subChapters.map(s => ({
-        ...s,
-        isActive: s.id === 11
-      }))
-    })));
+      subChapters: c.subChapters.map(s => {
+        if (s.id === subId) {
+          // If this is the one we're activating, grab its blocks if they exist
+          if (s.blocks && s.blocks.length > 0) {
+            targetBlocks = s.blocks;
+          }
+          return { ...s, isActive: true };
+        }
+        return { ...s, isActive: false };
+      })
+    }));
 
-    const demoBlocks: Block[] = [
-      { id: '1', type: 'text', content: 'Selamat datang di modul pertama. Pada bagian ini, kita akan mengeksplorasi pondasi dasar dari kepemimpinan transformasional di era digital. Memahami lima pilar utama ini adalah langkah awal yang krusial bagi setiap pemimpin organisasi.' },
-      { id: '2', type: 'h1', content: 'Watch the Foundation Video' },
-      { id: '3', type: 'embed_video', content: 'https://drive.google.com/drive/folders/1kf2fLMYvJNsMcDKD' }
-    ];
-    setBlocks(demoBlocks);
-    saveToHistory(demoBlocks);
-  };
-
-  const handleSimulateSubBab2 = () => {
-    // Switch to Sub-bab 2 empty state
-    setChapters(chapters.map(c => ({
-      ...c,
-      subChapters: c.subChapters.map(s => ({
-        ...s,
-        isActive: s.id === 12
-      }))
-    })));
-
-    const demoBlocks: Block[] = [
-      { id: '1', type: 'empty', content: '' }
-    ];
-    setBlocks(demoBlocks);
-    saveToHistory(demoBlocks);
+    setChapters(updatedChapters);
+    setBlocks(targetBlocks);
+    setHistory([targetBlocks]);
+    setHistoryIndex(0);
   };
 
   const handleAddSidebarSubBab = (chapterId: number) => {
@@ -243,6 +322,10 @@ export default function CoachCourseMaterialPage() {
     }));
   };
 
+  const handleEditSidebarChapterTitle = (chapterId: number, newTitle: string) => {
+    setChapters(chapters.map(ch => ch.id === chapterId ? { ...ch, title: newTitle } : ch));
+  };
+
   const handleToggleChapter = (chapterId: number) => {
     setChapters(chapters.map(ch => ch.id === chapterId ? { ...ch, isOpen: !ch.isOpen } : ch));
   };
@@ -279,24 +362,41 @@ export default function CoachCourseMaterialPage() {
     })));
   };
 
-  const [isOverviewActive, setIsOverviewActive] = useState(false);
+  const [isOverviewActive, setIsOverviewActive] = useState(true);
 
   const activeSubChapter = chapters.flatMap(c => c.subChapters).find(s => s.isActive);
   const isSubBab1 = activeSubChapter?.id === 11;
 
   const handleOverviewClick = () => {
-    setIsOverviewActive(true);
-    setChapters(chapters.map(c => ({
+    // First, sync current blocks into the currently active sub-chapter if any
+    let updatedChapters = [...chapters];
+    const activeChIndex = updatedChapters.findIndex(c => c.subChapters.some(s => s.isActive));
+    if (activeChIndex !== -1) {
+      const activeSubIndex = updatedChapters[activeChIndex].subChapters.findIndex(s => s.isActive);
+      if (activeSubIndex !== -1) {
+        updatedChapters[activeChIndex].subChapters[activeSubIndex] = {
+          ...updatedChapters[activeChIndex].subChapters[activeSubIndex],
+          blocks: [...blocks]
+        };
+      }
+    }
+
+    updatedChapters = updatedChapters.map(c => ({
       ...c,
       subChapters: c.subChapters.map(s => ({ ...s, isActive: false }))
-    })));
-    // Reset blocks to an overview template if desired, or keep current
+    }));
+    
+    setChapters(updatedChapters);
+    setIsOverviewActive(true);
+    
+    // Overview can have its own static content for now
     const demoBlocks: Block[] = [
       { id: '1', type: 'h1', content: 'Course Overview' },
       { id: '2', type: 'text', content: 'Di sini Anda dapat menuliskan ringkasan materi dan tujuan pembelajaran untuk course ini.' }
     ];
     setBlocks(demoBlocks);
-    saveToHistory(demoBlocks);
+    setHistory([demoBlocks]);
+    setHistoryIndex(0);
   };
 
   return (
@@ -310,7 +410,7 @@ export default function CoachCourseMaterialPage() {
             KEMBALI KE LIST COURSE
           </Link>
           <h2 className="font-black text-[#0B2545] uppercase tracking-wide leading-tight">
-            ADVANCED NEGOTIATION STRATEGY
+            {courseTitle}
           </h2>
         </div>
 
@@ -325,8 +425,15 @@ export default function CoachCourseMaterialPage() {
           {chapters.map((ch, idx) => (
             <div key={ch.id} className="space-y-2">
               <div className="border border-neutral-200 rounded-lg bg-neutral-50 p-4 flex justify-between items-start cursor-pointer hover:bg-neutral-100 transition-colors" onClick={() => handleToggleChapter(ch.id)}>
-                <div className="font-black text-[#0B2545] text-xs uppercase pr-2 leading-relaxed flex items-center gap-2">
-                  <span>{ch.title}</span>
+                <div className="font-black text-[#0B2545] text-[10px] md:text-xs uppercase pr-2 flex items-center gap-2 w-full">
+                  <input
+                    type="text"
+                    value={ch.title}
+                    onChange={(e) => handleEditSidebarChapterTitle(ch.id, e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full bg-transparent focus:outline-none placeholder:text-neutral-400"
+                    placeholder="Nama Bab"
+                  />
                 </div>
                 <div className="flex flex-col gap-1 shrink-0 items-end">
                   <div className="flex items-center gap-2 mb-1">
@@ -352,21 +459,7 @@ export default function CoachCourseMaterialPage() {
                   {ch.subChapters.map((sub, index) => (
                     <div 
                       key={sub.id} 
-                      onClick={() => {
-                        setIsOverviewActive(false);
-                        // Activate this sub-chapter visually (if simulating subbab1/subbab2, keep existing logic, else just set active)
-                        if (sub.id === 11) handleSimulateSubBab1();
-                        else if (sub.id === 12) handleSimulateSubBab2();
-                        else {
-                          setChapters(chapters.map(c => ({
-                            ...c,
-                            subChapters: c.subChapters.map(s => ({
-                              ...s,
-                              isActive: s.id === sub.id
-                            }))
-                          })));
-                        }
-                      }}
+                      onClick={() => handleSelectSubChapter(ch.id, sub.id)}
                       className={`border rounded-lg p-3 flex justify-between items-center text-xs cursor-pointer transition-colors group ${!isOverviewActive && sub.isActive ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'bg-white border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
                     >
                       <input
@@ -420,15 +513,10 @@ export default function CoachCourseMaterialPage() {
         {/* Top Header */}
         <div className="px-8 py-4 flex items-center justify-between border-b border-neutral-200 shrink-0 bg-white z-10">
           <div className="text-[10px] md:text-xs font-bold text-neutral-500">
-            <Link href="/coach/course" className="hover:text-[#D47225]">Program</Link> &gt; ... &gt; <span className="text-[#0B2545] font-black">Course Advanced Negotiation Strategy</span>
+            <Link href="/coach/course" className="hover:text-[#D47225]">PROGRAM</Link> &gt; <span className="text-[#0B2545] font-black">Course {courseTitle}</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              </span>
-              <input type="text" placeholder="Cari Course" className="pl-4 pr-10 py-1.5 border border-neutral-300 rounded-full text-xs w-48 focus:outline-none focus:border-[#0B2545]" />
-            </div>
+
             <div className="text-right hidden md:block">
               <div className="text-xs font-bold text-[#0B2545]">Super Admin</div>
               <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">SYSTEM AUTHORITY</div>
@@ -508,7 +596,7 @@ export default function CoachCourseMaterialPage() {
                         <span className="px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
                       </div>
                     )}
-                    <button className="bg-[#0B2545] hover:bg-[#13325B] text-white px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
+                    <button onClick={handleSimpan} className="bg-[#0B2545] hover:bg-[#13325B] text-white px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
                       SIMPAN
                     </button>
                   </div>
@@ -677,15 +765,37 @@ export default function CoachCourseMaterialPage() {
                             Ganti Link
                           </button>
                           <div className="w-full aspect-video rounded-xl overflow-hidden bg-neutral-900 relative group cursor-pointer border border-neutral-200">
-                            <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200" alt="Video Thumbnail" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#0B2545" stroke="#0B2545" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                              </div>
-                            </div>
-                            <div className="absolute top-4 right-4 bg-black/50 p-2 rounded text-white">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                            </div>
+                            {(() => {
+                              const url = block.content;
+                              let embedUrl = url;
+                              
+                              if (url.includes('youtube.com/watch?v=')) {
+                                embedUrl = url.replace('watch?v=', 'embed/');
+                                // Handle extra params
+                                if (embedUrl.includes('&')) embedUrl = embedUrl.split('&')[0];
+                              } else if (url.includes('youtu.be/')) {
+                                embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+                              } else if (url.includes('drive.google.com/file/d/')) {
+                                embedUrl = url.replace('/view', '/preview');
+                              }
+
+                              if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+                                return <img src={url} alt="Embed" className="w-full h-full object-contain bg-neutral-100" />;
+                              }
+                              
+                              if (url.match(/\.(mp4|webm|ogg)$/i)) {
+                                return <video controls src={url} className="w-full h-full object-contain bg-black" />;
+                              }
+
+                              return (
+                                <iframe 
+                                  src={embedUrl} 
+                                  className="w-full h-full" 
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                  allowFullScreen
+                                />
+                              );
+                            })()}
                           </div>
                         </div>
                       )}

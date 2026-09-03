@@ -32,7 +32,7 @@ router.get('/', authenticate, async (req, res) => {
 // Enroll in program (student)
 router.post('/', authenticate, authorize('student'), async (req, res) => {
   try {
-    const { programId } = req.body;
+    const { programId, paymentProof } = req.body;
     if (!programId) {
       return res.status(400).json({ error: 'programId required' });
     }
@@ -40,15 +40,26 @@ router.post('/', authenticate, authorize('student'), async (req, res) => {
     if (!program || !program.isPublished) {
       return res.status(404).json({ error: 'Program not available' });
     }
-    const existing = await Enrollment.findOne({ where: { studentId: req.user.id, programId } });
-    if (existing) {
-      return res.status(409).json({ error: 'Already enrolled' });
+    let enrollment = await Enrollment.findOne({ where: { studentId: req.user.id, programId } });
+    
+    if (enrollment) {
+      if (enrollment.paymentStatus === 'verified') {
+        return res.status(409).json({ error: 'Already enrolled and verified' });
+      }
+      // Update existing
+      await enrollment.update({
+        paymentStatus: 'pending',
+        paymentProof: paymentProof || null
+      });
+    } else {
+      enrollment = await Enrollment.create({
+        studentId: req.user.id,
+        programId,
+        status: 'active',
+        paymentStatus: 'pending',
+        paymentProof: paymentProof || null
+      });
     }
-    const enrollment = await Enrollment.create({
-      studentId: req.user.id,
-      programId,
-      status: 'active'
-    });
     res.status(201).json(enrollment);
   } catch (error) {
     console.error('Enroll error:', error);
@@ -96,6 +107,28 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
   } catch (error) {
     console.error('Delete enrollment error:', error);
     res.status(500).json({ error: 'Failed to delete enrollment' });
+  }
+});
+
+// Verify payment (admin)
+router.put('/:id/verify', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findByPk(req.params.id);
+    if (!enrollment) {
+      return res.status(404).json({ error: 'Enrollment not found' });
+    }
+    const { action } = req.body; // 'verify' or 'reject'
+    if (action === 'verify') {
+      await enrollment.update({ paymentStatus: 'verified' });
+    } else if (action === 'reject') {
+      await enrollment.update({ paymentStatus: 'rejected' });
+    } else {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    res.json(enrollment);
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: 'Failed to verify payment' });
   }
 });
 
