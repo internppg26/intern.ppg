@@ -35,13 +35,13 @@ function AdminCMSDetailContent() {
           if (data && data.title) {
             setTitle(data.title);
             let parsedDesc = data.content || '';
-            let parsedBlocks = [{ id: '1', type: 'empty', content: '' }];
+            let parsedBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
             try {
               const parsed = JSON.parse(data.content);
               if (parsed && typeof parsed === 'object') {
                 parsedDesc = parsed.desc || '';
                 if (parsed.blocks && parsed.blocks.length > 0) {
-                  parsedBlocks = parsed.blocks;
+                  parsedBlocks = parsed.blocks as Block[];
                 }
               }
             } catch (e) {}
