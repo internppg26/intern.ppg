@@ -4,6 +4,22 @@ const { authenticate, authorize } = require('../middlewares/auth');
 
 const router = express.Router();
 
+// Get all schedules (Public access)
+router.get('/public', async (req, res) => {
+  try {
+    const schedules = await Schedule.findAll({
+      where: {
+        type: ['Corporate', 'Government', 'Educational', 'Pub Training & In-House', 'Certification', 'Entrepreneurial']
+      },
+      order: [['date', 'ASC'], ['startTime', 'ASC']]
+    });
+    res.json(schedules);
+  } catch (error) {
+    console.error('Fetch public schedules error:', error);
+    res.status(500).json({ error: 'Failed to fetch schedules' });
+  }
+});
+
 // Get all schedules (filtered by role)
 router.get('/', authenticate, async (req, res) => {
   try {
