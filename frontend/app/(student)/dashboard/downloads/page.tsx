@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function DownloadsPage() {
+  const [activeFilter, setActiveFilter] = useState('All Files');
+
   const files = [
     { id: 1, title: 'Strategic_Human_Capital_v2.pdf', size: '4.2 MB', type: 'PDF', icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></> },
     { id: 2, title: 'Project_Budget_Template.xlsx', size: '1.8 MB', type: 'Excel', icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><rect x="8" y="13" width="8" height="4"></rect><path d="M10 13v4"></path><path d="M14 13v4"></path><path d="M8 15h8"></path></> },
@@ -11,6 +13,10 @@ export default function DownloadsPage() {
     { id: 5, title: 'Market_Analysis_Report_Q4.pdf', size: '3.7 MB', type: 'PDF', icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></> },
     { id: 6, title: 'Feedback_Form_Assessment.docx', size: '0.5 MB', type: 'Word', icon: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15l2 2 4-4"></path></> },
   ];
+
+  const filteredFiles = activeFilter === 'All Files' 
+    ? files 
+    : files.filter(file => file.type === activeFilter);
 
   return (
     <div className="flex flex-col min-h-full">
@@ -36,9 +42,16 @@ export default function DownloadsPage() {
 
         {/* Filter Tags */}
         <div className="flex flex-wrap gap-3 mb-10">
-          <button className="px-6 py-2 rounded-full bg-[#D47225] text-white text-sm font-bold shadow-md shadow-[#D47225]/20">All Files</button>
-          {['PDF', 'Word', 'Excel', 'Images', 'Video'].map((tag) => (
-            <button key={tag} className="px-6 py-2 rounded-full border border-neutral-200 bg-white text-neutral-600 text-sm font-medium hover:border-[#D47225] hover:text-[#D47225] transition-colors">
+          {['All Files', 'PDF', 'Word', 'Excel', 'Images', 'Video'].map((tag) => (
+            <button 
+              key={tag} 
+              onClick={() => setActiveFilter(tag)}
+              className={`px-6 py-2 rounded-full text-sm transition-colors ${
+                activeFilter === tag 
+                  ? 'bg-[#D47225] text-white font-bold shadow-md shadow-[#D47225]/20 border border-[#D47225]' 
+                  : 'border border-neutral-200 bg-white text-neutral-600 font-medium hover:border-[#D47225] hover:text-[#D47225]'
+              }`}
+            >
               {tag}
             </button>
           ))}
@@ -46,7 +59,7 @@ export default function DownloadsPage() {
 
         {/* File Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {files.map((file) => (
+          {filteredFiles.map((file) => (
             <div key={file.id} className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#F4E3D7] text-[#964B13] flex items-center justify-center shrink-0">

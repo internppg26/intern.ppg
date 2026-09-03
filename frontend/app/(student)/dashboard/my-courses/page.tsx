@@ -21,6 +21,13 @@ export default function MyCoursesPage() {
     .catch(() => setLoading(false));
   }, []);
 
+  const [activeTab, setActiveTab] = useState('Sedang Berjalan');
+
+  const ongoingCourses = courses.filter(c => c.status === 'Sedang Berjalan');
+  const completedCourses = courses.filter(c => c.status === 'Selesai');
+
+  const displayedCourses = activeTab === 'Sedang Berjalan' ? ongoingCourses : completedCourses;
+
   return (
     <div className="flex flex-col min-h-full">
       <div className="p-8 lg:p-12 max-w-6xl mx-auto w-full flex-grow">
@@ -45,14 +52,25 @@ export default function MyCoursesPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-neutral-200 mb-10 text-sm font-medium">
-          <button className="px-6 py-3 text-[#0B2545] font-bold border-b-2 border-[#D47225]">Sedang Berjalan ({courses.length})</button>
+          <button 
+            onClick={() => setActiveTab('Sedang Berjalan')}
+            className={`px-6 py-3 font-bold border-b-2 ${activeTab === 'Sedang Berjalan' ? 'text-[#0B2545] border-[#D47225]' : 'text-neutral-500 border-transparent hover:text-neutral-700'}`}
+          >
+            Sedang Berjalan ({ongoingCourses.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('Selesai')}
+            className={`px-6 py-3 font-bold border-b-2 ${activeTab === 'Selesai' ? 'text-[#0B2545] border-[#D47225]' : 'text-neutral-500 border-transparent hover:text-neutral-700'}`}
+          >
+            Selesai ({completedCourses.length})
+          </button>
         </div>
 
         {/* Course Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {loading ? (
             <div>Loading...</div>
-          ) : courses.map((enrollment) => {
+          ) : displayedCourses.map((enrollment) => {
             const course = enrollment.Program;
             if (!course) return null;
             const category = course.category ? course.category.split('||')[0].replace(/ Program/gi, '') : 'PROGRAM';

@@ -15,6 +15,10 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const [googleToken, setGoogleToken] = useState('');
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [googleUsername, setGoogleUsername] = useState('');
+
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setLoading(true);
     try {
@@ -31,6 +35,13 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
+
+      if (data.requireUsername) {
+        setGoogleToken(credentialResponse.credential || '');
+        setShowUsernameModal(true);
+        setLoading(false);
+        return;
+      }
       
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -39,7 +50,45 @@ export default function RegisterPage() {
       
       const role = data.user.role?.toLowerCase() || 'student';
       if (role === 'admin') router.push('/admin');
-      else if (role === 'instructor' || role === 'coach') router.push('/coach');
+      else if (role === 'instructor') router.push('/coach');
+      else router.push('/dashboard');
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      alert('An error occurred during Google login.');
+      setLoading(false);
+    }
+  };
+
+  const submitGoogleUsername = async () => {
+    if (!googleUsername.trim()) {
+      alert('Username is required');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: googleToken, username: googleUsername }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Google login failed');
+        setLoading(false);
+        return;
+      }
+      
+      setShowUsernameModal(false);
+      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      const role = data.user.role?.toLowerCase() || 'student';
+      if (role === 'admin') router.push('/admin');
+      else if (role === 'instructor') router.push('/coach');
       else router.push('/dashboard');
       
     } catch (error) {
@@ -209,6 +258,47 @@ export default function RegisterPage() {
           </Link>
         </div>
       </div>
+
+      {showUsernameModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-[#0B2545] mb-2">Complete Registration</h3>
+            <p className="text-sm text-neutral-600 mb-6">Please choose a username to complete your Google sign in.</p>
+            
+            <div className="mb-6">
+              <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Username</label>
+              <input
+                type="text"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                value={googleUsername}
+                onChange={(e) => setGoogleUsername(e.target.value)}
+                placeholder="ex: johndoe123"
+                autoFocus
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => {
+                  setShowUsernameModal(false);
+                  setGoogleToken('');
+                }}
+                className="px-5 py-2.5 text-sm font-bold text-neutral-600 hover:bg-neutral-100 rounded transition-colors"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitGoogleUsername}
+                disabled={loading}
+                className="px-5 py-2.5 text-sm font-bold bg-[#E5832E] hover:bg-[#D47225] text-white rounded transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Complete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
