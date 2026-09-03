@@ -21,10 +21,38 @@ export default function AdminSchedulePage() {
   const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/schedules');
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/schedules', {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
       if (res.ok) {
         const data = await res.json();
-        setEvents(data);
+        // map backend keys to frontend keys
+        const mappedData = data.map((item: any) => {
+          let desc = item.notes || '';
+          let location = 'Online';
+          if (desc.includes('\n\nLokasi: ')) {
+            const parts = desc.split('\n\nLokasi: ');
+            desc = parts[0];
+            location = parts[1];
+          }
+          return {
+            ...item,
+            desc,
+            location,
+            tag: item.type || 'Corporate',
+            time: item.startTime || '00:00'
+          };
+        });
+        
+        // Filter out Instructor/LMS events for this page
+        const publicTags = ['Corporate', 'Government', 'Educational', 'Pub Training & In-House', 'Certification', 'Entrepreneurial'];
+        const comprofEvents = mappedData.filter((ev: any) => publicTags.includes(ev.tag));
+        
+        setEvents(comprofEvents);
       }
     } catch (error) {
       console.error('Failed to fetch schedules:', error);
@@ -101,10 +129,19 @@ export default function AdminSchedulePage() {
       const url = editingId ? `/api/schedules/${editingId}` : '/api/schedules';
       const method = editingId ? 'PUT' : 'POST';
       
+      const payload = {
+        title: formData.title,
+        type: formData.tag, // map frontend tag to backend type
+        notes: `${formData.desc}${formData.location ? `\n\nLokasi: ${formData.location}` : ''}`, // append location to notes
+        link: formData.link,
+        date: formData.date,
+        startTime: formData.time // map frontend time to backend startTime
+      };
+      
       const res = await fetch(url, {
         method,
         headers: getAuthHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {

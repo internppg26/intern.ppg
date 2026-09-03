@@ -22,10 +22,26 @@ export default function PublicSchedulePage() {
     const fetchSchedules = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/schedules');
+        const res = await fetch('/api/schedules/public');
         if (res.ok) {
           const data = await res.json();
-          setEvents(data);
+          const mappedData = data.map((item: any) => {
+            let desc = item.notes || '';
+            let location = 'Online';
+            if (desc.includes('\n\nLokasi: ')) {
+              const parts = desc.split('\n\nLokasi: ');
+              desc = parts[0];
+              location = parts[1];
+            }
+            return {
+              ...item,
+              desc,
+              location,
+              tag: item.type || 'Corporate',
+              time: item.startTime || '00:00'
+            };
+          });
+          setEvents(mappedData);
         } else {
           setError('Gagal memuat jadwal');
         }
@@ -202,12 +218,14 @@ export default function PublicSchedulePage() {
                         <button className="w-9 h-9 flex items-center justify-center border border-neutral-200 rounded-md text-neutral-500 hover:bg-neutral-50 transition-colors">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                         </button>
-                        <button 
-                          onClick={() => window.location.href = ev.link}
-                          className="bg-[#0B2545] hover:bg-[#15345E] text-white px-6 py-2.5 rounded-md text-sm font-bold transition-colors"
+                        <a 
+                          href={ev.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#0B2545] hover:bg-[#15345E] text-white px-6 py-2.5 rounded-md text-sm font-bold transition-colors block text-center"
                         >
-                          Daftar
-                        </button>
+                          Lihat Detail
+                        </a>
                       </div>
                     </div>
                   );

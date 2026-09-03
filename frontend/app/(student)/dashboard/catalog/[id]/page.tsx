@@ -70,10 +70,20 @@ export default function CourseDetailPage() {
                 ch.subChapters.forEach((sub: any) => {
                   if (Array.isArray(sub.blocks)) {
                     sub.blocks.forEach((blk: any) => {
-                      if (blk.type === 'video' || (blk.type === 'embed' && (blk.content.includes('youtube') || blk.content.includes('video')))) {
-                        videos++;
-                      } else if (blk.type === 'file' || blk.type === 'pdf' || (blk.type === 'embed' && blk.content.includes('drive'))) {
-                        pdfs++;
+                      const t = blk.type || '';
+                      const c = (blk.content || '').toLowerCase();
+                      if (t === 'video') videos++;
+                      else if (t === 'file' || t === 'pdf') pdfs++;
+                      else if (t === 'embed_video' || t === 'embed_pdf' || t === 'embed') {
+                        if (c.includes('youtube') || c.includes('youtu.be') || c.includes('vimeo')) {
+                          videos++;
+                        } else if (c.includes('drive.google.com') || c.includes('.pdf') || t === 'embed_pdf') {
+                          pdfs++;
+                        } else {
+                          // Fallback
+                          if (t === 'embed_video') videos++;
+                          else pdfs++;
+                        }
                       }
                     });
                   }
