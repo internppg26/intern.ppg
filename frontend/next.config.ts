@@ -12,11 +12,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  serverActions: {
-    bodySizeLimit: '50mb',
-  },
   experimental: {
-    middlewareClientMaxBodySize: 50 * 1024 * 1024,
+    proxyClientMaxBodySize: 50 * 1024 * 1024,
+    serverActions: {
+      bodySizeLimit: '50mb',
+    }
   },
 };
 

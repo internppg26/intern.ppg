@@ -41,6 +41,14 @@ module.exports = (sequelize, DataTypes) => {
     feedback: {
       type: DataTypes.TEXT,
     },
+    paymentStatus: {
+      type: DataTypes.ENUM('pending', 'verified', 'rejected'),
+      defaultValue: 'pending',
+    },
+    paymentProof: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     tableName: 'enrollments',
     timestamps: true,

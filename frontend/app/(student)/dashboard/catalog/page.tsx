@@ -4,20 +4,49 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 
 export default function CourseCatalogPage() {
-  const allCourses = [
-    { id: 1, title: 'Fundamental UI/UX Design for Modern Products', programName: 'Corporate', programField: 'Design', duration: '4 Weeks', price: 'Rp 1.500.000', img: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=2000' },
-    { id: 2, title: 'Advanced Fullstack Web Development with React', programName: 'Government', programField: 'Development', duration: '8 Weeks', price: 'Rp 3.250.000', img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2072' },
-    { id: 3, title: 'Digital Marketing 101: Strategy & Execution', programName: 'Corporate', programField: 'Marketing', duration: '5 Weeks', price: 'Rp 1.200.000', img: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2015' },
-    { id: 4, title: 'Startup Management & Growth Frameworks', programName: 'Certification', programField: 'Business', duration: '6 Weeks', price: 'Rp 2.100.000', img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=2070' },
-    { id: 5, title: 'Introduction to Data Analytics with Python', programName: 'Educational', programField: 'Data', duration: '4 Weeks', price: 'Rp 1.800.000', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070' },
-    { id: 6, title: 'Motion Graphics & Animation Mastery', programName: 'Public & In-House', programField: 'Creative', duration: '10 Weeks', price: 'Rp 4.500.000', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2070' },
-    { id: 7, title: 'Corporate Leadership & Executive Coaching', programName: 'Entrepreneurial', programField: 'Management', duration: '12 Weeks', price: 'Rp 5.000.000', img: 'https://images.unsplash.com/photo-1552581234-26160f608093?auto=format&fit=crop&q=80&w=2070' },
-    { id: 8, title: 'Public Speaking & Presentation Skills', programName: 'Public', programField: 'Communication', duration: '3 Weeks', price: 'Rp 800.000', img: 'https://images.unsplash.com/photo-1475721028070-281ce13fbb45?auto=format&fit=crop&q=80&w=2070' },
-    { id: 9, title: 'Government Policy Analysis & Strategy', programName: 'Government', programField: 'Policy', duration: '8 Weeks', price: 'Rp 3.000.000', img: 'https://images.unsplash.com/photo-1529107336423-f368eb1a9e3e?auto=format&fit=crop&q=80&w=2070' },
-    { id: 10, title: 'Financial Modeling for Startups', programName: 'Certification', programField: 'Finance', duration: '6 Weeks', price: 'Rp 2.500.000', img: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=2070' },
-    { id: 11, title: 'Educational Leadership & Curriculum Design', programName: 'Educational', programField: 'Education', duration: '8 Weeks', price: 'Rp 2.200.000', img: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=2070' },
-    { id: 12, title: 'Agile Project Management Masterclass', programName: 'In-House', programField: 'Project', duration: '5 Weeks', price: 'Rp 1.900.000', img: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=2070' },
-  ];
+  const [allCourses, setAllCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    fetch('/api/programs', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      const mapped = data.map((p: any) => {
+        let progName = 'Program';
+        let progField = 'Course';
+        if (p.category && p.category.includes('||')) {
+          const parts = p.category.split('||');
+          progName = parts[0].replace(/ Program/gi, '');
+          progField = parts[1];
+        } else if (p.category) {
+          progName = p.category.replace(/ Program/gi, '');
+        }
+
+        let parsedPrice = 'Rp 0';
+        try {
+          if (p.description) {
+            const desc = JSON.parse(p.description);
+            if (desc.price) parsedPrice = `Rp ${desc.price}`;
+          }
+        } catch(e) {}
+
+        return {
+          id: p.id,
+          title: p.title,
+          programName: progName,
+          programField: progField,
+          duration: p.duration ? `${p.duration} Days` : 'Flexible',
+          price: parsedPrice,
+          img: p.thumbnail !== '/Logo_Performa_Puncak.png' ? p.thumbnail : 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=2000'
+        };
+      });
+      setAllCourses(mapped);
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoading(false));
+  }, []);
 
   const categories = ['Corporate', 'Government', 'Educational', 'Certification', 'Entrepreneurial', 'Public & In-House'];
 

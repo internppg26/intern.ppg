@@ -85,37 +85,68 @@ function ListCourseContent() {
   const totalPages = Math.ceil(courses.length / itemsPerPage) || 1;
   const paginatedCourses = courses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  useEffect(() => {
-    if (!params?.bidangId) return;
-    
-    const saved = localStorage.getItem(`admin_courses_${params.bidangId}`);
+  // Parse parent program name from localStorage for the API category tag
+  const getParentProgramName = () => {
+    const saved = localStorage.getItem('admin_programs');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved).map((c: any) => ({
-          ...c,
-          actions: ['Material Course', 'Detail Course', 'Edit'] // force override legacy 'Buka'
-        }));
-        setCourses(parsed);
-      } catch (e) {
-        setCourses(DUMMY_COURSES);
-      }
-    } else {
-      setCourses(DUMMY_COURSES);
+        const progs = JSON.parse(saved);
+        const p = progs.find((x: any) => x.id.toString() === params?.id);
+        if (p) return p.title;
+      } catch (e) {}
     }
-    setIsLoaded(true);
-  }, [params?.bidangId]);
-
-  const updateCourses = (newCourses: any[]) => {
-    setCourses(newCourses);
-    localStorage.setItem(`admin_courses_${params?.bidangId}`, JSON.stringify(newCourses));
+    return 'Corporate Program'; // fallback
   };
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch('/api/programs?all=true', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const filtered = data.filter((p: any) => p.category && p.category.includes(bidangName));
+        setCourses(filtered.map((p: any) => {
+          let safeDesc = p.description || '';
+          let customInstructor = '';
+          try {
+            const parsed = JSON.parse(safeDesc);
+            safeDesc = parsed.shortDesc || parsed.about || safeDesc;
+            customInstructor = parsed.instructorName || '';
+          } catch(e) {}
+
+          return {
+          id: p.id,
+          title: p.title,
+          desc: safeDesc,
+          badge: getParentProgramName().replace(/ Program/gi, '').toUpperCase(),
+          duration: p.duration ? `${p.duration} Days Access` : '30 Days Access',
+          facilitator: customInstructor || (p.instructor ? p.instructor.name : 'Belum Ada Instruktur'),
+          actions: ['Material Course', 'Detail Course', 'Edit'],
+          image: p.thumbnail !== '/Logo_Performa_Puncak.png' ? p.thumbnail : '',
+          };
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to fetch courses:', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!params?.bidangId) return;
+    fetchCourses();
+  }, [params?.bidangId, bidangName]);
 
   const handleAddClick = () => {
     setModalMode('add');
     setCurrentCourse({
       title: '',
       desc: '',
-      duration: '',
+      duration: '30',
       facilitator: '',
       image: '',
       badge: 'PROFESSIONAL',
@@ -138,33 +169,80 @@ function ListCourseContent() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setCurrentCourse({ ...currentCourse, image: imageUrl });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCurrentCourse({ ...currentCourse, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!currentCourse?.title || !currentCourse?.desc) {
       alert("Harap lengkapi Nama Course dan Deskripsi!");
       return;
     }
 
-    if (modalMode === 'add') {
-      const newCourse = { 
-        ...currentCourse, 
-        id: Date.now() 
-      };
-      updateCourses([newCourse, ...courses]);
-    } else {
-      updateCourses(courses.map(c => c.id === currentCourse.id ? currentCourse : c));
+    const payload = {
+      title: currentCourse.title,
+      description: currentCourse.desc,
+      category: `${getParentProgramName()}||${bidangName}`,
+      duration: parseInt(currentCourse.duration) || 30,
+      price: 0,
+      thumbnail: currentCourse.image || '/Logo_Performa_Puncak.png'
+    };
+
+    try {
+      let res;
+      if (modalMode === 'add') {
+        res = await fetch('/api/programs', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(`/api/programs/${currentCourse.id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res.ok) {
+        fetchCourses();
+        handleCloseModal();
+      } else {
+        const errText = await res.text();
+        alert(`Gagal menyimpan course: ${res.status} ${errText}`);
+      }
+    } catch (e: any) {
+      console.error('Save error', e);
+      alert('Network/Save error: ' + e.message);
     }
-    handleCloseModal();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm("Apakah Anda yakin ingin menghapus course ini?")) {
-      updateCourses(courses.filter(c => c.id !== currentCourse.id));
-      handleCloseModal();
+      try {
+        const res = await fetch(`/api/programs/${currentCourse.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (res.ok) {
+          fetchCourses();
+          handleCloseModal();
+        }
+      } catch (e) {
+        console.error('Delete error', e);
+      }
     }
   };
 
@@ -227,10 +305,20 @@ function ListCourseContent() {
             <div key={course.id} className="bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-neutral-100 flex flex-col p-4 relative group">
               {/* Direct Delete Button (Hover) */}
               <button 
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
                   if (window.confirm("Apakah Anda yakin ingin menghapus course ini?")) {
-                    updateCourses(courses.filter(c => c.id !== course.id));
+                    try {
+                      const res = await fetch(`/api/programs/${course.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                      });
+                      if (res.ok) {
+                        fetchCourses();
+                      }
+                    } catch (err) {}
                   }
                 }}
                 className="absolute top-6 right-6 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20"
@@ -396,10 +484,10 @@ function ListCourseContent() {
                 <label className="block text-xs font-semibold text-[#0B2545]">Nama Instruktur</label>
                 <input 
                   type="text" 
-                  value={currentCourse?.facilitator || ''}
-                  onChange={(e) => setCurrentCourse({...currentCourse, facilitator: e.target.value})}
-                  placeholder="Nama instruktur"
-                  className="w-full border border-[#0B2545] rounded-md px-3 py-2.5 text-sm text-[#0B2545] outline-none transition-colors"
+                  value={currentCourse?.facilitator || 'Menunggu Klaim dari Coach'}
+                  readOnly
+                  disabled
+                  className="w-full border border-neutral-300 bg-neutral-100 rounded-md px-3 py-2.5 text-sm text-neutral-500 outline-none cursor-not-allowed"
                 />
               </div>
 
