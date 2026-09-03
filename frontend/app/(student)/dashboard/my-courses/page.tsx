@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 export default function MyCoursesPage() {
+  const [activeTab, setActiveTab] = useState('Sedang Berjalan');
+
   const courses = [
     { 
       id: 1, 
@@ -13,7 +15,8 @@ export default function MyCoursesPage() {
       progress: 0, 
       img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070',
       action: 'Mulai Belajar',
-      link: '/course/1/pre-test/intro'
+      link: '/course/1/pre-test/intro',
+      status: 'Sedang Berjalan'
     },
     { 
       id: 2, 
@@ -23,19 +26,26 @@ export default function MyCoursesPage() {
       progress: 45, 
       img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=2070',
       action: 'Lanjutkan Belajar',
-      link: '/course/2/material'
+      link: '/course/2/material',
+      status: 'Sedang Berjalan'
     },
     { 
       id: 3, 
-      title: 'Advanced Fullstack Development', 
+      title: 'Data Science Essentials', 
       programName: 'Government', 
       programField: 'Technology', 
-      progress: 45, 
+      progress: 100, 
       img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2072',
-      action: 'Lanjutkan Belajar',
-      link: '/course/3/material'
+      action: 'Lihat Sertifikat',
+      link: '/dashboard/e-certificate',
+      status: 'Selesai'
     },
   ];
+
+  const ongoingCourses = courses.filter(c => c.status === 'Sedang Berjalan');
+  const completedCourses = courses.filter(c => c.status === 'Selesai');
+
+  const displayedCourses = activeTab === 'Sedang Berjalan' ? ongoingCourses : completedCourses;
 
   return (
     <div className="flex flex-col min-h-full">
@@ -61,13 +71,35 @@ export default function MyCoursesPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-neutral-200 mb-10 text-sm font-medium">
-          <button className="px-6 py-3 text-[#0B2545] font-bold border-b-2 border-[#D47225]">Sedang Berjalan (2)</button>
-          <button className="px-6 py-3 text-neutral-500 hover:text-[#0B2545] transition-colors">Selesai (1)</button>
+          <button 
+            onClick={() => setActiveTab('Sedang Berjalan')}
+            className={`px-6 py-3 transition-colors ${
+              activeTab === 'Sedang Berjalan' 
+                ? 'text-[#0B2545] font-bold border-b-2 border-[#D47225]' 
+                : 'text-neutral-500 hover:text-[#0B2545]'
+            }`}
+          >
+            Sedang Berjalan ({ongoingCourses.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('Selesai')}
+            className={`px-6 py-3 transition-colors ${
+              activeTab === 'Selesai' 
+                ? 'text-[#0B2545] font-bold border-b-2 border-[#D47225]' 
+                : 'text-neutral-500 hover:text-[#0B2545]'
+            }`}
+          >
+            Selesai ({completedCourses.length})
+          </button>
         </div>
 
         {/* Course Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {courses.map((course) => (
+          {displayedCourses.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-neutral-500">
+              Belum ada pelatihan di kategori ini.
+            </div>
+          ) : displayedCourses.map((course) => (
             <div key={course.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-4">
               <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-neutral-100">
                 <img src={course.img} alt={course.title} className="w-full h-full object-cover mix-blend-multiply" />

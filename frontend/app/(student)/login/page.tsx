@@ -231,7 +231,6 @@ export default function LoginPage() {
               console.error('Login Failed');
               alert('Google login failed');
             }}
-            useOneTap
             width="100%"
           />
         </div>

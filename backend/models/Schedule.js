@@ -9,24 +9,30 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    desc: {
-      type: DataTypes.TEXT,
-    },
-    tag: {
-      type: DataTypes.STRING,
-    },
-    link: {
+    type: {
       type: DataTypes.STRING,
     },
     date: {
       type: DataTypes.DATEONLY,
     },
-    time: {
+    startTime: {
       type: DataTypes.STRING,
     },
-    location: {
+    endTime: {
       type: DataTypes.STRING,
     },
+    link: {
+      type: DataTypes.STRING,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+    },
+    instructorId: {
+      type: DataTypes.INTEGER,
+    },
+    participantId: {
+      type: DataTypes.INTEGER,
+    }
   }, {
     tableName: 'schedules',
     timestamps: true,

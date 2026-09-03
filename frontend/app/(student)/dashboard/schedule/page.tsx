@@ -1,42 +1,89 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
+type ScheduleEvent = {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  type: string;
+  link?: string;
+  notes?: string;
+  instructor?: { id: number; name: string; email: string; };
+};
 
 export default function SchedulePage() {
-  const sessions = [
-    {
-      id: 1,
-      title: "Leadership Strategy: One-on-One Session",
-      date: "Oct 24, 2023 • 02:00 PM",
-      mentor: "Dr. Helena Vance",
-      status: "upcoming",
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect></>
-    },
-    {
-      id: 2,
-      title: "Digital Transformation Workshop",
-      date: "Oct 26, 2023 • 10:00 AM",
-      mentor: "Marcus Aurelius",
-      status: "upcoming",
-      icon: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect></>
-    },
-    {
-      id: 3,
-      title: "Performance Assessment Review",
-      date: "Oct 18, 2023 • 03:00 PM",
-      mentor: "Dr. Helena Vance",
-      status: "completed",
-      icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></>
-    },
-    {
-      id: 4,
-      title: "Public Speaking & Pitching Drills",
-      date: "Nov 02, 2023 • 01:00 PM",
-      mentor: "Sara Tancredi",
-      status: "upcoming",
-      icon: <><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4z"></path><rect x="3" y="6" width="12" height="12" rx="2" ry="2"></rect></>
+  const [sessions, setSessions] = useState<ScheduleEvent[]>([]);
+
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
+
+  const fetchSchedules = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/schedules', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data);
+      }
+    } catch (e) {
+      console.error(e);
     }
-  ];
+  };
+
+  const getStatus = (date: string, endTime: string) => {
+    const now = new Date();
+    const endDateStr = `${date}T${endTime}`;
+    const endDate = new Date(endDateStr);
+    
+    // If invalid date parsing
+    if (isNaN(endDate.getTime())) return 'upcoming';
+    
+    return now > endDate ? 'completed' : 'upcoming';
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const renderLinkButton = (link: string | undefined) => {
+    if (!link) return (
+      <button disabled className="w-full md:w-auto bg-neutral-100 text-neutral-400 px-8 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+        No Link Provided
+      </button>
+    );
+    
+    const isZoom = link.includes('zoom.us');
+    const isMeet = link.includes('meet.google.com');
+    const isMaps = link.includes('maps') || link.includes('goo.gl/maps');
+    
+    let text = 'Buka Tautan';
+    let icon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
+    
+    if (isZoom) {
+      text = 'Join Zoom';
+      icon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>;
+    } else if (isMeet) {
+      text = 'Join Meet';
+      icon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>;
+    } else if (isMaps) {
+      text = 'Buka Maps';
+      icon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+    }
+
+    return (
+      <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="w-full md:w-auto bg-[#964B13] hover:bg-[#7A3D0F] text-white px-8 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#964B13]/20">
+        {icon}
+        {text}
+      </a>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -62,46 +109,61 @@ export default function SchedulePage() {
 
         {/* Sessions List */}
         <div className="space-y-6 mb-12">
-          {sessions.map((session) => (
-            <div key={session.id} className="bg-white border border-neutral-200 rounded-full p-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:shadow-md transition-shadow gap-4">
-              <div className="flex items-center gap-6 pl-2">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${session.status === 'completed' ? 'bg-neutral-100 text-neutral-400' : 'bg-[#F4E3D7] text-[#964B13]'}`}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    {session.icon}
-                  </svg>
-                </div>
-                <div>
-                  <h3 className={`font-bold text-base mb-1 ${session.status === 'completed' ? 'text-neutral-400' : 'text-[#0B2545]'}`}>
-                    {session.title}
-                  </h3>
-                  <div className={`flex items-center gap-4 text-xs font-medium ${session.status === 'completed' ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    <span className="flex items-center gap-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                      {session.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      {session.mentor}
-                    </span>
+          {sessions.length === 0 ? (
+            <div className="bg-white border border-neutral-200 rounded-2xl p-8 text-center shadow-sm">
+              <p className="text-neutral-500">Belum ada jadwal yang dijadwalkan untuk Anda.</p>
+            </div>
+          ) : (
+            sessions.map((session) => {
+              const status = getStatus(session.date, session.endTime);
+              const isWorkshop = session.type === 'Workshop';
+              
+              let iconSVG = <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect></>;
+              if (status === 'completed') {
+                iconSVG = <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></>;
+              } else if (isWorkshop) {
+                iconSVG = <><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4z"></path><rect x="3" y="6" width="12" height="12" rx="2" ry="2"></rect></>;
+              }
+              
+              return (
+                <div key={session.id} className="bg-white border border-neutral-200 rounded-[2rem] p-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:shadow-md transition-shadow gap-4">
+                  <div className="flex items-center gap-6 pl-2">
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${status === 'completed' ? 'bg-neutral-100 text-neutral-400' : 'bg-[#F4E3D7] text-[#964B13]'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {iconSVG}
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className={`font-bold text-base mb-1 ${status === 'completed' ? 'text-neutral-400' : 'text-[#0B2545]'}`}>
+                        {session.title}
+                      </h3>
+                      <div className={`flex items-center gap-4 text-xs font-medium ${status === 'completed' ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                        <span className="flex items-center gap-1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                          {formatDate(session.date)} • {session.startTime}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          {session.instructor?.name || 'Instructor'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pr-2 shrink-0">
+                    {status === 'completed' ? (
+                      <button disabled className="w-full md:w-auto bg-neutral-100 text-neutral-400 px-8 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Completed
+                      </button>
+                    ) : (
+                      renderLinkButton(session.link)
+                    )}
                   </div>
                 </div>
-              </div>
-              
-              <div className="pr-2 shrink-0">
-                {session.status === 'completed' ? (
-                  <button disabled className="w-full md:w-auto bg-neutral-100 text-neutral-400 px-8 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    Completed
-                  </button>
-                ) : (
-                  <button className="w-full md:w-auto bg-[#964B13] hover:bg-[#7A3D0F] text-white px-8 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#964B13]/20">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                    Join Session
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+              );
+            })
+          )}
         </div>
 
         {/* Reschedule Box */}
