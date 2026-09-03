@@ -38,6 +38,11 @@ console.log('[DEBUG] Loading auth router');
 const authRouter = require('./routes/auth');
 app.use('/api/auth', authRouter);
 
+// Users routes (Admin management)
+console.log('[DEBUG] Loading users router');
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
+
 // Program routes
 console.log('[DEBUG] Loading program router');
 const programRouter = require('./routes/program');
