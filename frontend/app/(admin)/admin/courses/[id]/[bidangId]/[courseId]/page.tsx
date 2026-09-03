@@ -37,10 +37,6 @@ function CourseDetailContent() {
         let progName = data.category.split('||')[0].replace(/ Program/gi, '');
         setCourseProgramName(progName);
       }
-      if (data.Modules && Array.isArray(data.Modules)) {
-        setVideoCount(data.Modules.filter((m: any) => m.videoUrl && m.videoUrl.trim() !== '').length);
-        setPdfCount(data.Modules.filter((m: any) => m.pdfUrl && m.pdfUrl.trim() !== '').length);
-      }
       if (data.description) {
         try {
           const parsed = JSON.parse(data.description);
@@ -52,6 +48,37 @@ function CourseDetailContent() {
           setLearnItems(parsed.learnItems || []);
           setChapters(parsed.chapters || []);
           
+          let videos = 0;
+          let pdfs = 0;
+          if (Array.isArray(parsed.chapters)) {
+            parsed.chapters.forEach((ch: any) => {
+              if (Array.isArray(ch.subChapters)) {
+                ch.subChapters.forEach((sub: any) => {
+                  if (Array.isArray(sub.blocks)) {
+                    sub.blocks.forEach((blk: any) => {
+                      const t = blk.type || '';
+                      const c = (blk.content || '').toLowerCase();
+                      if (t === 'video') videos++;
+                      else if (t === 'file' || t === 'pdf') pdfs++;
+                      else if (t === 'embed_video' || t === 'embed_pdf' || t === 'embed') {
+                        if (c.includes('youtube') || c.includes('youtu.be') || c.includes('vimeo')) {
+                          videos++;
+                        } else if (c.includes('drive.google.com') || c.includes('.pdf') || t === 'embed_pdf') {
+                          pdfs++;
+                        } else {
+                          if (t === 'embed_video') videos++;
+                          else pdfs++;
+                        }
+                      }
+                    });
+                  }
+                });
+              }
+            });
+          }
+          setVideoCount(videos);
+          setPdfCount(pdfs);
+
           setHistory([{
             about: parsed.about || '',
             price: parsed.price || '',
