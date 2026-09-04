@@ -11,6 +11,8 @@ export default function CoachLayout({
 }) {
   const pathname = usePathname();
 
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
   React.useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -22,6 +24,7 @@ export default function CoachLayout({
 
     try {
       const user = JSON.parse(savedUser);
+      setCurrentUser(user);
       if (user.role === 'admin') {
         window.location.href = '/admin';
       } else if (user.role === 'student' || user.role === 'peserta') {
@@ -56,11 +59,11 @@ export default function CoachLayout({
         {/* User Profile */}
         <div className="px-6 py-4 mb-4">
           <div className="bg-[#13325B] border border-white/10 rounded-xl p-6 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
-            <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3 text-xl font-bold uppercase">
+              {currentUser?.name?.[0] || currentUser?.username?.[0] || 'C'}
             </div>
-            <h3 className="font-bold text-base">Coach Pratama</h3>
-            <p className="text-xs text-white/60">coach@ppg.com</p>
+            <h3 className="font-bold text-base capitalize">{currentUser?.name || currentUser?.username || 'Coach'}</h3>
+            <p className="text-xs text-white/60">{currentUser?.email || 'coach@ppg.com'}</p>
           </div>
         </div>
 
@@ -92,11 +95,18 @@ export default function CoachLayout({
 
         {/* Footer actions */}
         <div className="p-6 space-y-4">
-          <Link href="/coach/profile" className="flex items-center gap-3 text-[#5A879D] hover:text-white transition-colors font-bold text-sm tracking-wide">
+          <Link 
+            href="/coach/profile" 
+            className={`flex items-center gap-3 px-4 py-3 -mx-4 rounded-r-xl transition-colors font-bold text-sm tracking-wide ${
+              pathname === '/coach/profile'
+                ? 'bg-[#0E5177] text-white border-l-4 border-[#E5832E]' 
+                : 'text-[#5A879D] hover:text-white border-l-4 border-transparent'
+            }`}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            ADMIN PROFILE
+            INSTRUCTOR PROFILE
           </Link>
-          <Link href="/login" className="flex items-center gap-3 text-[#E53E3E] hover:text-red-400 transition-colors font-bold text-sm tracking-wide">
+          <Link href="/login" className="flex items-center gap-3 px-4 py-2 -mx-4 text-[#E53E3E] hover:text-red-400 transition-colors font-bold text-sm tracking-wide">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             LOG OUT
           </Link>

@@ -18,6 +18,7 @@ export default function CoachDashboardPage() {
   const [upcomingEvents, setUpcomingEvents] = React.useState<ScheduleEvent[]>([]);
   const [activeClasses, setActiveClasses] = React.useState<number>(0);
   const [pendingGrades, setPendingGrades] = React.useState<number>(0);
+  const [pendingExams, setPendingExams] = React.useState<any[]>([]);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
@@ -69,6 +70,7 @@ export default function CoachDashboardPage() {
           const examData = await examRes.json();
           const pending = examData.filter((ex: any) => ex.score === null || ex.passed === null);
           setPendingGrades(pending.length);
+          setPendingExams(pending);
         }
       } catch (e) {
         console.error("Failed to fetch dashboard data", e);
