@@ -105,14 +105,14 @@ export default function CoachCoursePage() {
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="text-right hidden md:block">
-            <div className="text-xs font-bold text-[#0B2545]">{currentUser?.name || 'Coach Pratama'}</div>
+            <div className="text-xs font-bold text-[#0B2545]">{currentUser?.name || currentUser?.username || 'Coach'}</div>
             <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{currentUser?.role || 'INSTRUKTUR'}</div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm overflow-hidden">
+          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm overflow-hidden uppercase">
             {currentUser?.avatar ? (
               <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              (currentUser?.name || 'CP').substring(0, 2).toUpperCase()
+              (currentUser?.name?.[0] || currentUser?.username?.[0] || 'C')
             )}
           </div>
         </div>

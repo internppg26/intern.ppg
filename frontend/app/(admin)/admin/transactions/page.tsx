@@ -27,6 +27,8 @@ export default function AdminTransactionsPage() {
     fetchTransactions();
   }, []);
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   const handleVerify = async (id: number, action: 'verify' | 'reject') => {
     if (!confirm(`Yakin ingin ${action === 'verify' ? 'menerima' : 'menolak'} pembayaran ini?`)) return;
     try {
@@ -89,9 +91,12 @@ export default function AdminTransactionsPage() {
                   </td>
                   <td className="p-4 text-center">
                     {enr.paymentProof ? (
-                      <a href={enr.paymentProof} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline text-xs font-medium">
+                      <button 
+                        onClick={() => setSelectedImage(enr.paymentProof)}
+                        className="text-blue-500 hover:underline text-xs font-medium cursor-pointer"
+                      >
                         Lihat Gambar
-                      </a>
+                      </button>
                     ) : (
                       <span className="text-neutral-400 text-xs">-</span>
                     )}
@@ -114,6 +119,29 @@ export default function AdminTransactionsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <button 
+              className="absolute -top-10 right-0 text-white font-bold text-xl hover:text-neutral-300"
+              onClick={() => setSelectedImage(null)}
+            >
+              Tutup &times;
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Bukti Transfer" 
+              className="max-w-full max-h-[85vh] object-contain rounded bg-white"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
