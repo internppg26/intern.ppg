@@ -159,7 +159,7 @@ export default function LoginPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Email Address or Username</label>
             <input
               type="text"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@gmail.com or username"
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
