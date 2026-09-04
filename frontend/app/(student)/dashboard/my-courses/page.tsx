@@ -1,46 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function MyCoursesPage() {
-  const [activeTab, setActiveTab] = useState('Sedang Berjalan');
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const courses = [
-    { 
-      id: 1, 
-      title: 'Corporate Strategy Masterclass', 
-      programName: 'Corporate', 
-      programField: 'Business', 
-      progress: 0, 
-      img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070',
-      action: 'Mulai Belajar',
-      link: '/course/1/pre-test/intro',
-      status: 'Sedang Berjalan'
-    },
-    { 
-      id: 2, 
-      title: 'Advanced Fullstack Development', 
-      programName: 'Government', 
-      programField: 'Technology', 
-      progress: 45, 
-      img: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=2070',
-      action: 'Lanjutkan Belajar',
-      link: '/course/2/material',
-      status: 'Sedang Berjalan'
-    },
-    { 
-      id: 3, 
-      title: 'Data Science Essentials', 
-      programName: 'Government', 
-      programField: 'Technology', 
-      progress: 100, 
-      img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=2072',
-      action: 'Lihat Sertifikat',
-      link: '/dashboard/e-certificate',
-      status: 'Selesai'
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/enrollments', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        setCourses(data);
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+  }, []);
+
+  const [activeTab, setActiveTab] = useState('Sedang Berjalan');
 
   const ongoingCourses = courses.filter(c => c.status === 'Sedang Berjalan');
   const completedCourses = courses.filter(c => c.status === 'Selesai');
@@ -73,21 +54,13 @@ export default function MyCoursesPage() {
         <div className="flex border-b border-neutral-200 mb-10 text-sm font-medium">
           <button 
             onClick={() => setActiveTab('Sedang Berjalan')}
-            className={`px-6 py-3 transition-colors ${
-              activeTab === 'Sedang Berjalan' 
-                ? 'text-[#0B2545] font-bold border-b-2 border-[#D47225]' 
-                : 'text-neutral-500 hover:text-[#0B2545]'
-            }`}
+            className={`px-6 py-3 font-bold border-b-2 ${activeTab === 'Sedang Berjalan' ? 'text-[#0B2545] border-[#D47225]' : 'text-neutral-500 border-transparent hover:text-neutral-700'}`}
           >
             Sedang Berjalan ({ongoingCourses.length})
           </button>
           <button 
             onClick={() => setActiveTab('Selesai')}
-            className={`px-6 py-3 transition-colors ${
-              activeTab === 'Selesai' 
-                ? 'text-[#0B2545] font-bold border-b-2 border-[#D47225]' 
-                : 'text-neutral-500 hover:text-[#0B2545]'
-            }`}
+            className={`px-6 py-3 font-bold border-b-2 ${activeTab === 'Selesai' ? 'text-[#0B2545] border-[#D47225]' : 'text-neutral-500 border-transparent hover:text-neutral-700'}`}
           >
             Selesai ({completedCourses.length})
           </button>
@@ -95,41 +68,55 @@ export default function MyCoursesPage() {
 
         {/* Course Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {displayedCourses.length === 0 ? (
-            <div className="col-span-full py-12 text-center text-neutral-500">
-              Belum ada pelatihan di kategori ini.
-            </div>
-          ) : displayedCourses.map((course) => (
-            <div key={course.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-4">
-              <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-neutral-100">
-                <img src={course.img} alt={course.title} className="w-full h-full object-cover mix-blend-multiply" />
-                <div className="absolute top-3 right-3 flex gap-2">
-                  <span className="bg-[#0B2545] text-white text-[10px] font-bold px-3 py-1 rounded uppercase tracking-widest shadow-sm">
-                    {course.programName}
-                  </span>
-                  <span className="bg-[#D47225] text-white text-[10px] font-bold px-3 py-1 rounded uppercase tracking-widest shadow-sm">
-                    {course.programField}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col flex-grow">
-                <h3 className="font-bold text-[#0B2545] text-lg mb-6 leading-tight flex-grow">{course.title}</h3>
-                <div className="mb-6">
-                  <div className="flex justify-between items-end mb-2 text-[10px] font-bold uppercase tracking-widest">
-                    <span className="text-neutral-500">PROGRES</span>
-                    <span className="text-[#0B2545]">{course.progress}%</span>
-                  </div>
-                  <div className="w-full bg-[#F4E3D7] rounded-full h-2">
-                    <div className="bg-[#D47225] h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
+          {loading ? (
+            <div>Loading...</div>
+          ) : displayedCourses.map((enrollment) => {
+            const course = enrollment.Program;
+            if (!course) return null;
+            const category = course.category ? course.category.split('||')[0].replace(/ Program/gi, '') : 'PROGRAM';
+            const isVerified = enrollment.paymentStatus === 'verified';
+            const isPending = enrollment.paymentStatus === 'pending';
+            
+            return (
+              <div key={enrollment.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-4">
+                <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-neutral-100">
+                  <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070" alt={course.title} className="w-full h-full object-cover mix-blend-multiply" />
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <span className="bg-[#0B2545] text-white text-[10px] font-bold px-3 py-1 rounded uppercase tracking-widest shadow-sm">
+                      {category.toUpperCase()}
+                    </span>
                   </div>
                 </div>
-                <Link href={course.link} className="block w-full bg-[#0B2545] hover:bg-[#13325B] text-white text-center py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
-                  {course.action}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </Link>
+                <div className="flex flex-col flex-grow">
+                  <h3 className="font-bold text-[#0B2545] text-lg mb-6 leading-tight flex-grow">{course.title}</h3>
+                  <div className="mb-6">
+                    <div className="flex justify-between items-end mb-2 text-[10px] font-bold uppercase tracking-widest">
+                      <span className="text-neutral-500">PROGRES</span>
+                      <span className="text-[#0B2545]">{enrollment.progress || 0}%</span>
+                    </div>
+                    <div className="w-full bg-[#F4E3D7] rounded-full h-2">
+                      <div className="bg-[#D47225] h-2 rounded-full" style={{ width: `${enrollment.progress || 0}%` }}></div>
+                    </div>
+                  </div>
+                  
+                  {isVerified ? (
+                    <Link href={`/dashboard/my-courses/${course.id}/material`} className="block w-full bg-[#0B2545] hover:bg-[#13325B] text-white text-center py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                      Lanjutkan Belajar
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </Link>
+                  ) : isPending ? (
+                    <div className="block w-full bg-neutral-200 text-neutral-500 text-center py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2">
+                      Menunggu Verifikasi Admin
+                    </div>
+                  ) : (
+                    <div className="block w-full bg-red-100 text-red-600 text-center py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2">
+                      Pembayaran Ditolak
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Bottom Grid */}

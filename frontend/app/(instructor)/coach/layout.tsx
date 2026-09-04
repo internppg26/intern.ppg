@@ -11,6 +11,27 @@ export default function CoachLayout({
 }) {
   const pathname = usePathname();
 
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    
+    if (!token || !savedUser) {
+      window.location.href = '/login';
+      return;
+    }
+
+    try {
+      const user = JSON.parse(savedUser);
+      if (user.role === 'admin') {
+        window.location.href = '/admin';
+      } else if (user.role === 'student' || user.role === 'peserta') {
+        window.location.href = '/dashboard';
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const menuItems = [
     { name: 'DASHBOARD', path: '/coach', icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></> },
     { name: 'COURSE', path: '/coach/course', icon: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></> },

@@ -13,9 +13,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   React.useEffect(() => {
     const fetchUser = () => {
       const savedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      
+      if (!token || !savedUser) {
+        window.location.href = '/login';
+        return;
+      }
+
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser);
+          
+          if (user.role === 'admin') {
+            window.location.href = '/admin';
+            return;
+          } else if (user.role === 'instructor' || user.role === 'coach') {
+            window.location.href = '/coach';
+            return;
+          }
+
           setUserName(user.name || 'User');
           setUserEmail(user.email || '');
           setUserAvatar(user.avatar || '');
@@ -30,18 +46,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener('user-updated', fetchUser);
   }, []);
 
+  const isMaterialPage = pathname.includes('/material');
+
   return (
     <div className="flex h-screen bg-[#F8F9FA] font-sans">
       
       {/* Sidebar */}
-      <aside className="w-[280px] bg-[#0B2545] text-white flex flex-col hidden md:flex">
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8">
-            <img src="/Logo_Performa_Puncak.png" alt="Logo" className="w-full h-full object-contain" />
+      {!isMaterialPage && (
+        <aside className="w-[280px] bg-[#0B2545] text-white flex flex-col hidden md:flex">
+          {/* Logo */}
+          <div className="p-6 flex items-center gap-3">
+            <div className="w-8 h-8">
+              <img src="/Logo_Performa_Puncak.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-bold text-sm tracking-wide">Performa Puncak Group</span>
           </div>
-          <span className="font-bold text-sm tracking-wide">Performa Puncak Group</span>
-        </div>
 
         {/* User Profile */}
         <div className="px-6 py-4 mb-4">
@@ -98,6 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
       </aside>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto relative flex flex-col">

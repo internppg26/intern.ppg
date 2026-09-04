@@ -244,8 +244,8 @@ export default function RegisterPage() {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => {
-              console.error('Login Failed');
-              alert('Google login failed');
+              console.error('Registration Failed');
+              alert('Google signup failed');
             }}
             width="100%"
           />
