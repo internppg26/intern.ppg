@@ -20,6 +20,7 @@ function CourseDetailContent() {
   // Form States
   const [about, setAbout] = useState('');
   const [price, setPrice] = useState('');
+  const [certificateUrl, setCertificateUrl] = useState('');
   const [instructorName, setInstructorName] = useState('');
   const [instructorRole, setInstructorRole] = useState('');
   const [instructorImage, setInstructorImage] = useState<string | null>(null);
@@ -42,6 +43,7 @@ function CourseDetailContent() {
           const parsed = JSON.parse(data.description);
           setAbout(parsed.about || '');
           setPrice(parsed.price || '');
+          setCertificateUrl(parsed.certificateUrl || '');
           setInstructorName(parsed.instructorName || '');
           setInstructorRole(parsed.instructorRole || '');
           setInstructorImage(parsed.instructorImage || null);
@@ -139,6 +141,7 @@ function CourseDetailContent() {
   const applyState = (state: any) => {
     setAbout(state.about);
     setPrice(state.price);
+    setCertificateUrl(state.certificateUrl || '');
     setInstructorName(state.instructorName);
     setInstructorRole(state.instructorRole);
     setLearnItems([...state.learnItems]);
@@ -150,6 +153,7 @@ function CourseDetailContent() {
     saveToHistory({
       about,
       price,
+      certificateUrl,
       instructorName,
       instructorRole,
       learnItems: [...learnItems],
@@ -222,7 +226,7 @@ function CourseDetailContent() {
       const payload = {
         isPublished: isOpen,
         description: JSON.stringify({
-          about, price, instructorName, instructorRole, instructorImage, learnItems, chapters
+          about, price, certificateUrl, instructorName, instructorRole, instructorImage, learnItems, chapters
         })
       };
       
@@ -521,9 +525,15 @@ function CourseDetailContent() {
                 <div className="flex items-center gap-3 text-sm text-neutral-600">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5A623" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                   {pdfCount} PDF
+                  </div>
+
+                <div className="mt-6 border-t border-neutral-100 pt-6">
+                  <p className="text-xs font-bold text-[#0B2545] mb-2 uppercase tracking-wider">Link Sertifikat Course</p>
+                  <input type="text" placeholder="https://drive.google.com/..." className="w-full border border-neutral-300 rounded-lg p-3 text-sm focus:outline-none focus:border-[#0B2545] focus:ring-1 focus:ring-[#0B2545]" value={certificateUrl} onChange={e => setCertificateUrl(e.target.value)} onBlur={commitHistory} />
+                  <p className="text-xs text-neutral-400 mt-2">Link ini akan muncul di halaman E-Certificate peserta jika kursus sudah diselesaikan 100%.</p>
+                </div>
                 </div>
               </div>
-            </div>
 
             {/* Instructor Box */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">

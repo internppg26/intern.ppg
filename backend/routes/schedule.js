@@ -116,19 +116,19 @@ router.post('/', authenticate, authorize('instructor', 'admin'), async (req, res
     res.status(201).json(created);
   } catch (error) {
     console.error('Create schedule error:', error);
-    res.status(500).json({ error: 'Failed to create schedule' });
+    res.status(500).json({ error: 'Failed to create schedule: ' + error.message });
   }
 });
 
 // Update schedule
-router.put('/:id', authenticate, authorize('instructor', 'admin'), async (req, res) => {
+router.put('/:id', authenticate, authorize('instructor', 'coach', 'admin'), async (req, res) => {
   try {
     const schedule = await Schedule.findByPk(req.params.id);
     if (!schedule) {
       return res.status(404).json({ error: 'Schedule not found' });
     }
     
-    if (req.user.role === 'instructor' && schedule.instructorId !== req.user.id) {
+    if ((req.user.role === 'instructor' || req.user.role === 'coach') && schedule.instructorId !== req.user.id) {
       return res.status(403).json({ error: 'You can only edit your own schedules' });
     }
     
@@ -148,19 +148,19 @@ router.put('/:id', authenticate, authorize('instructor', 'admin'), async (req, r
     res.json(updated);
   } catch (error) {
     console.error('Update schedule error:', error);
-    res.status(500).json({ error: 'Failed to update schedule' });
+    res.status(500).json({ error: 'Failed to update schedule: ' + error.message });
   }
 });
 
 // Delete schedule
-router.delete('/:id', authenticate, authorize('instructor', 'admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('instructor', 'coach', 'admin'), async (req, res) => {
   try {
     const schedule = await Schedule.findByPk(req.params.id);
     if (!schedule) {
       return res.status(404).json({ error: 'Schedule not found' });
     }
     
-    if (req.user.role === 'instructor' && schedule.instructorId !== req.user.id) {
+    if ((req.user.role === 'instructor' || req.user.role === 'coach') && schedule.instructorId !== req.user.id) {
       return res.status(403).json({ error: 'You can only delete your own schedules' });
     }
     
@@ -168,7 +168,7 @@ router.delete('/:id', authenticate, authorize('instructor', 'admin'), async (req
     res.json({ message: 'Schedule deleted' });
   } catch (error) {
     console.error('Delete schedule error:', error);
-    res.status(500).json({ error: 'Failed to delete schedule' });
+    res.status(500).json({ error: 'Failed to delete schedule: ' + error.message });
   }
 });
 
