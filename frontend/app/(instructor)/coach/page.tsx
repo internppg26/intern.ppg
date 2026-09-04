@@ -16,28 +16,57 @@ type ScheduleEvent = {
 
 export default function CoachDashboardPage() {
   const [todayEvents, setTodayEvents] = React.useState<ScheduleEvent[]>([]);
+  const [activeClasses, setActiveClasses] = React.useState(0);
+  const [pendingGrades, setPendingGrades] = React.useState(15);
+  const [coachName, setCoachName] = React.useState('Pratama');
 
   React.useEffect(() => {
-    const saved = localStorage.getItem('coach_schedule_events');
-    if (saved) {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    
+    let userId: number | null = null;
+    if (userStr) {
       try {
-        const parsed: ScheduleEvent[] = JSON.parse(saved);
-        const todayStr = new Date().toISOString().split('T')[0];
-        const filtered = parsed
-          .filter(ev => ev.date === todayStr)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        setTodayEvents(filtered);
+        const user = JSON.parse(userStr);
+        if (user.name) {
+          const names = user.name.split(' ');
+          setCoachName(names[0]);
+        }
+        userId = user.id;
       } catch (e) {
-        console.error("Failed to parse events", e);
+        console.error(e);
       }
-    } else {
-      // Mock if nothing in local storage yet
-      const todayStr = new Date().toISOString().split('T')[0];
-      setTodayEvents([
-        { id: '1', title: '1-on-1 Mentoring - Budi Utomo', date: todayStr, startTime: '09:00', endTime: '10:00', type: 'Mentoring' },
-        { id: '2', title: 'Workshop: Effective Comm.', date: todayStr, startTime: '13:30', endTime: '15:30', type: 'Workshop' }
-      ]);
     }
+
+    if (!token) return;
+
+    fetch('/api/schedules', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const filtered = data
+            .filter(ev => ev.date === todayStr)
+            .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+          setTodayEvents(filtered);
+        }
+      })
+      .catch(console.error);
+
+    fetch('/api/programs', { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          if (userId) {
+            const myClasses = data.filter(p => p.instructorId === userId && p.isPublished);
+            setActiveClasses(myClasses.length);
+          } else {
+            setActiveClasses(data.filter(p => p.isPublished).length);
+          }
+        }
+      })
+      .catch(console.error);
+
   }, []);
 
   return (
@@ -62,10 +91,10 @@ export default function CoachDashboardPage() {
         <div className="bg-[#0B2545] rounded-[2rem] p-10 flex flex-col md:flex-row items-center justify-between overflow-hidden relative mb-8 shadow-xl">
           <div className="relative z-10 md:w-3/5 text-white">
             <h1 className="text-4xl font-black mb-4 tracking-tight leading-tight">
-              Selamat Datang, Coach<br />Pratama!
+              Selamat Datang, Coach<br />{coachName}!
             </h1>
             <p className="text-neutral-300 text-sm leading-relaxed mb-8 max-w-md">
-              Anda memiliki {todayEvents.length} sesi konsultasi hari ini dan 15 penilaian yang menunggu tinjauan Anda. Mari kita bentuk pemimpin masa depan bersama.
+              Anda memiliki {todayEvents.length} sesi konsultasi hari ini dan {pendingGrades} penilaian yang menunggu tinjauan Anda. Mari kita bentuk pemimpin masa depan bersama.
             </p>
             <button className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-6 py-3 rounded-full font-bold text-sm transition-colors shadow-lg shadow-[#D47225]/30">
               Lihat Laporan Mingguan
@@ -109,7 +138,7 @@ export default function CoachDashboardPage() {
               <span className="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">BERJALAN</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">2</h2>
+              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">{activeClasses}</h2>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">ACTIVE CLASSES</p>
             </div>
           </div>
@@ -123,7 +152,7 @@ export default function CoachDashboardPage() {
               <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">BUTUH TINDAKAN</span>
             </div>
             <div className="relative z-10">
-              <h2 className="text-3xl font-black text-red-600 leading-none mb-1">15</h2>
+              <h2 className="text-3xl font-black text-red-600 leading-none mb-1">{pendingGrades}</h2>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">PENDING GRADES</p>
             </div>
           </div>
