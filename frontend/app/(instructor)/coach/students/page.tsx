@@ -1,15 +1,57 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function MyStudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [students, setStudents] = useState<any[]>([]);
 
-  const students = [
-    { id: 1, name: 'Budi Pratama', email: 'budi.p@corporate.com', course: 'Leadership Development', progress: 75, moduleProgress: 'Module 3 of 4', lastActive: '2 hours ago', initials: 'BP' },
-    { id: 2, name: 'Siti Rahmawati', email: 'siti.r@agency.co.id', course: 'Digital Marketing Strategy', progress: 100, moduleProgress: 'Completed', lastActive: '1 day ago', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150' },
-    { id: 3, name: 'Ahmad Satria', email: 'a.satria@bank.id', course: 'Corporate Finance Masterclass', progress: 45, moduleProgress: 'Module 2 of 5', lastActive: '3 hours ago', initials: 'AS' },
-  ];
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const res = await fetch('/api/enrollments', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Transform API data to match UI needs
+          const formattedStudents = data.map((enr: any) => {
+            const studentName = enr.student?.name || 'Unknown User';
+            const initials = studentName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            // Calculate progress simply for now
+            const progress = enr.progress || 0;
+            const moduleProgress = progress === 100 ? 'Completed' : `${progress}%`;
+            
+            // Calculate last active (just format the updated date for now)
+            const lastActive = new Date(enr.updatedAt).toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            return {
+              id: enr.id,
+              name: studentName,
+              email: enr.student?.email || '',
+              course: enr.Program?.title || 'Unknown Course',
+              progress,
+              moduleProgress,
+              lastActive,
+              initials,
+              avatar: null // no avatar in db currently
+            };
+          });
+          setStudents(formattedStudents);
+        }
+      } catch (error) {
+        console.error("Failed to fetch enrollments:", error);
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-full">

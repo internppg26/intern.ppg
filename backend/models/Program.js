@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: false,
     },
     thumbnail: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT('long'),
     },
   }, {
     tableName: 'programs',

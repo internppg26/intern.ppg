@@ -1,27 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface User {
   id: string;
   name: string;
   username?: string;
-  initials: string;
+  initials?: string;
   email: string;
   role: string;
-  status: string;
+  status?: string;
+  isActive?: boolean;
 }
 
 export default function AdminUserManagementPage() {
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Alex Johnson', initials: 'AJ', email: 'alex.j@example.com', role: 'Student', status: 'Active' },
-    { id: '2', name: 'James Wilson', initials: 'JW', email: 'j.wilson@training.org', role: 'Coach', status: 'Active' },
-    { id: '3', name: 'Sarah Chen', initials: 'SC', email: 'sarah.chen@university.edu', role: 'Student', status: 'Active' },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [currentUser, setCurrentUser] = useState({ name: 'User', role: 'SYSTEM AUTHORITY', initials: 'U' });
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setCurrentUser({
+          name: user.name || 'User',
+          role: user.role || 'SYSTEM AUTHORITY',
+          initials: (user.name || 'U').substring(0, 2).toUpperCase()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -32,15 +48,58 @@ export default function AdminUserManagementPage() {
     status: ''
   });
 
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("You must be logged in as an admin to view users.");
+        return;
+      }
+      
+      const res = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        // Map backend format to frontend format
+        const mapped = data.users.map((u: any) => ({
+          ...u,
+          id: u.id.toString(),
+          initials: u.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U',
+          role: u.role.charAt(0).toUpperCase() + u.role.slice(1),
+          status: u.isActive ? 'Active' : 'Inactive',
+        }));
+        setUsers(mapped);
+      } else {
+        const err = await res.json();
+        console.error('API Error:', err);
+        alert(`Failed to fetch users: ${err.error}. Are you logged in as admin?`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users', error);
+      alert('Network error while fetching users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
     setFormData({
       name: user.name,
       email: user.email,
       username: user.username || user.name.replace(/\s+/g, '') + '123',
-      password: 'dummyPassword123',
+      password: '', // Empty on edit
       role: user.role,
-      status: user.status
+      status: user.status || 'Active'
     });
     setModalMode('edit');
   };
@@ -69,39 +128,69 @@ export default function AdminUserManagementPage() {
     setSelectedUser(null);
   };
 
-  const isFormValid = formData.name && formData.email && formData.username && formData.password && formData.role && formData.status;
+  const isFormValid = formData.name && formData.email && formData.role && formData.status && (modalMode === 'edit' || formData.password);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isFormValid) return;
     
-    if (modalMode === 'add') {
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: formData.name,
-        username: formData.username,
-        initials: formData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U',
-        email: formData.email,
-        role: formData.role,
-        status: formData.status
-      };
-      setUsers([newUser, ...users]);
-    } else if (modalMode === 'edit' && selectedUser) {
-      setUsers(users.map(u => u.id === selectedUser.id ? {
-        ...u,
-        name: formData.name,
-        username: formData.username,
-        initials: formData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U',
-        email: formData.email,
-        role: formData.role,
-        status: formData.status
-      } : u));
+    try {
+      const token = localStorage.getItem('token');
+      if (modalMode === 'add') {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.error || 'Failed to add user');
+          return;
+        }
+      } else if (modalMode === 'edit' && selectedUser) {
+        const res = await fetch(`/api/users/${selectedUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(formData)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.error || 'Failed to update user');
+          return;
+        }
+      }
+      fetchUsers();
+      handleCloseModal();
+    } catch (error) {
+      console.error('Failed to save user', error);
+      alert('An error occurred while saving.');
     }
-    handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter(u => u.id !== id));
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          fetchUsers();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to delete user');
+        }
+      } catch (error) {
+        console.error('Failed to delete user', error);
+      }
     }
   };
 
@@ -119,7 +208,7 @@ export default function AdminUserManagementPage() {
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Reset to page 1 on filter change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedRole, selectedStatus]);
 
@@ -130,12 +219,18 @@ export default function AdminUserManagementPage() {
       <header className="bg-white border-b border-neutral-200 px-8 py-4 flex justify-between items-center shrink-0">
         <h1 className="font-bold text-sm text-[#0B2545]">Dashboard</h1>
         <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-xs font-bold text-[#0B2545]">Super Admin</div>
-            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">SYSTEM AUTHORITY</div>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm shrink-0">
-            SA
+          <div className="flex items-center gap-4 ml-8 border-l border-neutral-200 pl-8">
+            <div className="text-right">
+              <div className="text-xs font-bold text-[#0B2545]">
+                {currentUser.name}
+              </div>
+              <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-0.5">
+                {currentUser.role}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-[#FCE5D3] flex items-center justify-center text-sm font-bold text-[#E5832E]">
+              {currentUser.initials}
+            </div>
           </div>
         </div>
       </header>
@@ -181,7 +276,6 @@ export default function AdminUserManagementPage() {
               className="border border-neutral-200 bg-white rounded-full px-6 py-3 text-sm text-neutral-600 focus:outline-none focus:border-[#0B2545] shadow-sm appearance-none pr-10 relative bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[position:calc(100%-1rem)_center]">
               <option>All Roles</option>
               <option>Student</option>
-              <option>Coach</option>
               <option>Admin</option>
               <option>Instructor</option>
             </select>
@@ -209,7 +303,8 @@ export default function AdminUserManagementPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#FAF7F2] text-[10px] font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-200">
-                  <th className="py-5 px-8">USER NAME</th>
+                  <th className="py-5 px-8">FULL NAME</th>
+                  <th className="py-5 px-8">USERNAME</th>
                   <th className="py-5 px-8">EMAIL</th>
                   <th className="py-5 px-8">ROLE</th>
                   <th className="py-5 px-8">STATUS</th>
@@ -217,9 +312,13 @@ export default function AdminUserManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {paginatedUsers.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-neutral-500">No users found.</td>
+                    <td colSpan={6} className="py-8 text-center text-neutral-500">Loading users...</td>
+                  </tr>
+                ) : paginatedUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-neutral-500">No users found.</td>
                   </tr>
                 ) : paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-neutral-50/50 transition-colors">
@@ -228,8 +327,11 @@ export default function AdminUserManagementPage() {
                         <div className="w-10 h-10 rounded-full bg-[#EAF1F8] flex items-center justify-center text-sm font-bold text-[#0B2545] shrink-0">
                           {user.initials}
                         </div>
-                        <span className="text-sm font-bold text-[#0B2545]">{user.name}</span>
+                        <span className="block text-sm font-bold text-[#0B2545]">{user.name}</span>
                       </div>
+                    </td>
+                    <td className="py-5 px-8 text-sm text-neutral-600 font-medium">
+                      {user.username ? user.username : <span className="text-neutral-400 italic">Not set</span>}
                     </td>
                     <td className="py-5 px-8 text-sm text-neutral-600">{user.email}</td>
                     <td className="py-5 px-8">
@@ -336,7 +438,7 @@ export default function AdminUserManagementPage() {
             </div>
             
             <div className="p-8 pb-10 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-neutral-600">Full Name</label>
                   <input 
@@ -344,7 +446,8 @@ export default function AdminUserManagementPage() {
                     placeholder="ex:Gio Lio"
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors"
+                    disabled={modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student'}
+                    className={`w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors ${modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                 </div>
                 <div className="space-y-2">
@@ -354,12 +457,10 @@ export default function AdminUserManagementPage() {
                     placeholder="ex:gio.l@example.com"
                     value={formData.email}
                     onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors"
+                    disabled={modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student'}
+                    className={`w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors ${modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-bold text-neutral-600">Username</label>
                   <input 
@@ -367,18 +468,25 @@ export default function AdminUserManagementPage() {
                     placeholder="ex:GioLio321"
                     value={formData.username}
                     onChange={e => setFormData({...formData, username: e.target.value})}
-                    className="w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors"
+                    disabled={modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student'}
+                    className={`w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors ${modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-bold text-neutral-600">Password</label>
+                  <label className="block text-sm font-bold text-neutral-600">
+                    Password {modalMode === 'edit' && <span className="font-normal text-xs">(Leave blank to keep current)</span>}
+                  </label>
                   <input 
                     type={modalMode === 'edit' ? 'text' : 'password'} 
-                    placeholder="ex:LioGio123"
+                    placeholder={modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' ? 'Cannot edit student password' : 'ex:LioGio123'}
                     value={formData.password}
                     onChange={e => setFormData({...formData, password: e.target.value})}
-                    className="w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors"
+                    disabled={modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student'}
+                    className={`w-full bg-[#F4F5F7] border border-transparent focus:bg-white focus:border-neutral-300 rounded-xl px-5 py-3.5 text-[15px] text-[#0B2545] outline-none transition-colors ${modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
+                  {modalMode === 'edit' && selectedUser?.role.toLowerCase() === 'student' && (
+                    <p className="text-[10px] text-red-500 font-bold">Admins cannot change student passwords.</p>
+                  )}
                 </div>
               </div>
 
@@ -394,7 +502,6 @@ export default function AdminUserManagementPage() {
                       <option value="" disabled hidden>Pilih Role</option>
                       <option value="Instructor">Instructor</option>
                       <option value="Student">Student</option>
-                      <option value="Coach">Coach</option>
                       <option value="Admin">Admin</option>
                     </select>
                     <svg className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>

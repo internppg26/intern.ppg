@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -14,14 +15,114 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const [googleToken, setGoogleToken] = useState('');
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [googleUsername, setGoogleUsername] = useState('');
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: credentialResponse.credential }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Google login failed');
+        setLoading(false);
+        return;
+      }
+
+      if (data.requireUsername) {
+        setGoogleToken(credentialResponse.credential || '');
+        setShowUsernameModal(true);
+        setLoading(false);
+        return;
+      }
+      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Since Google doesn't provide a password, we mark it specially
+      
+      const role = data.user.role?.toLowerCase() || 'student';
+      if (role === 'admin') router.push('/admin');
+      else if (role === 'instructor') router.push('/coach');
+      else router.push('/dashboard');
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      alert('An error occurred during Google login.');
+      setLoading(false);
+    }
+  };
+
+  const submitGoogleUsername = async () => {
+    if (!googleUsername.trim()) {
+      alert('Username is required');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: googleToken, username: googleUsername }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Google login failed');
+        setLoading(false);
+        return;
+      }
+      
+      setShowUsernameModal(false);
+      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      const role = data.user.role?.toLowerCase() || 'student';
+      if (role === 'admin') router.push('/admin');
+      else if (role === 'instructor') router.push('/coach');
+      else router.push('/dashboard');
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      alert('An error occurred during Google login.');
+      setLoading(false);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, username, role: 'student' }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        alert(data.error || 'Registration failed');
+        setLoading(false);
+        return;
+      }
+      alert('Registration successful! Please log in.');
       router.push('/login');
-    }, 1000);
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('An error occurred during registration. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +151,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Name</label>
             <input
               type="text"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Alex Morgan"
@@ -62,7 +163,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Username</label>
             <input
               type="text"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="alexmorgan99_"
@@ -74,7 +175,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Email Address</label>
             <input
               type="email"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@gmail.com"
@@ -87,7 +188,7 @@ export default function RegisterPage() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
@@ -139,15 +240,16 @@ export default function RegisterPage() {
           <div className="border-t border-neutral-200 flex-grow"></div>
         </div>
 
-        <button className="w-full bg-white border border-neutral-200 hover:bg-neutral-50 text-brand-dark p-3 rounded text-xs font-bold tracking-wider transition-colors flex items-center justify-center gap-3">
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-          </svg>
-          SIGN IN WITH GOOGLE
-        </button>
+        <div className="flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.error('Registration Failed');
+              alert('Google signup failed');
+            }}
+            width="100%"
+          />
+        </div>
 
         <div className="mt-12 text-center text-sm">
           <span className="text-neutral-600">Have an account? </span>
@@ -156,6 +258,47 @@ export default function RegisterPage() {
           </Link>
         </div>
       </div>
+
+      {showUsernameModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-[#0B2545] mb-2">Complete Registration</h3>
+            <p className="text-sm text-neutral-600 mb-6">Please choose a username to complete your Google sign in.</p>
+            
+            <div className="mb-6">
+              <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Username</label>
+              <input
+                type="text"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                value={googleUsername}
+                onChange={(e) => setGoogleUsername(e.target.value)}
+                placeholder="ex: johndoe123"
+                autoFocus
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => {
+                  setShowUsernameModal(false);
+                  setGoogleToken('');
+                }}
+                className="px-5 py-2.5 text-sm font-bold text-neutral-600 hover:bg-neutral-100 rounded transition-colors"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitGoogleUsername}
+                disabled={loading}
+                className="px-5 py-2.5 text-sm font-bold bg-[#E5832E] hover:bg-[#D47225] text-white rounded transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Complete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,8 +22,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.get('/', (req, res) => {
@@ -37,6 +37,11 @@ app.get('/api/health', (req, res) => {
 console.log('[DEBUG] Loading auth router');
 const authRouter = require('./routes/auth');
 app.use('/api/auth', authRouter);
+
+// Users routes (Admin management)
+console.log('[DEBUG] Loading users router');
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
 
 // Program routes
 console.log('[DEBUG] Loading program router');
@@ -71,18 +76,21 @@ app.use('/api/exams', examRouter);
 const certificateRouter = require('./routes/certificate');
 app.use('/api/certificates', certificateRouter);
 
+// Schedule routes
+const scheduleRouter = require('./routes/schedule');
+app.use('/api/schedules', scheduleRouter);
+
 // Sync database and start server
 async function start() {
   try {
     await db.sequelize.authenticate();
     console.log('Database connected.');
-    if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: false }).catch(err => {
-        console.error('Database sync error:', err);
-        // Continue without sync
-      });
-      console.log('Database synced (no alter).');
-    }
+    
+    // Always sync in dev for now
+    await db.sequelize.sync({ alter: false }).catch(err => {
+      console.error('Database sync error:', err);
+    });
+    console.log('Database synced (no alter).');
     const server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

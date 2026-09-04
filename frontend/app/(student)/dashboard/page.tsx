@@ -4,13 +4,65 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function StudentDashboard() {
+  const [userName, setUserName] = React.useState('');
+  const [activeCourses, setActiveCourses] = React.useState(0);
+  const [completedCourses, setCompletedCourses] = React.useState(0);
+  const [certificatesCount, setCertificatesCount] = React.useState(0);
+  const [recentCourse, setRecentCourse] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        if (user.name) setUserName(user.name.toUpperCase());
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (token) {
+      // Fetch Enrollments
+      fetch('/api/enrollments', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const activeList = data.filter((e: any) => !e.isCompleted);
+          const completedList = data.filter((e: any) => e.isCompleted);
+          setActiveCourses(activeList.length);
+          setCompletedCourses(completedList.length);
+          if (activeList.length > 0) {
+            setRecentCourse(activeList[0]);
+          }
+        }
+      })
+      .catch(console.error);
+
+      // Fetch Certificates
+      fetch('/api/certificates', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCertificatesCount(data.length);
+        }
+      })
+      .catch(console.error);
+    }
+  }, []);
+
   return (
     <div className="p-8 lg:p-12 max-w-6xl mx-auto w-full">
       
       {/* Header Row */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-black text-[#0B2545] tracking-tight mb-2 uppercase">WELCOME BACK, ALEX MORGAN!</h1>
+          <h1 className="text-3xl font-black text-[#0B2545] tracking-tight mb-2 uppercase">WELCOME BACK{userName ? `, ${userName}` : ''}!</h1>
           <p className="text-[#E5832E] font-bold text-sm">Here is your learning progress for today.</p>
         </div>
         <div className="flex items-center gap-4">
@@ -30,7 +82,7 @@ export default function StudentDashboard() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           </div>
           <div>
-            <h2 className="text-3xl font-black text-[#0B2545]">12</h2>
+            <h2 className="text-3xl font-black text-[#0B2545]">{activeCourses}</h2>
             <p className="text-xs font-bold text-[#E5832E] uppercase tracking-wider">Active Courses</p>
           </div>
         </div>
@@ -39,7 +91,7 @@ export default function StudentDashboard() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
           </div>
           <div>
-            <h2 className="text-3xl font-black text-[#0B2545]">48</h2>
+            <h2 className="text-3xl font-black text-[#0B2545]">{completedCourses}</h2>
             <p className="text-xs font-bold text-[#E5832E] uppercase tracking-wider">Completed</p>
           </div>
         </div>
@@ -48,36 +100,49 @@ export default function StudentDashboard() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 15l-3 3-2-2-3 3v-8"></path><circle cx="12" cy="8" r="4"></circle><path d="M16 15l3 3 2-2 3 3v-8"></path></svg>
           </div>
           <div>
-            <h2 className="text-3xl font-black text-[#0B2545]">15</h2>
+            <h2 className="text-3xl font-black text-[#0B2545]">{certificatesCount}</h2>
             <p className="text-xs font-bold text-[#E5832E] uppercase tracking-wider">Certificates</p>
           </div>
         </div>
       </div>
 
       {/* Progress Card */}
-      <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h3 className="text-lg font-black text-[#0B2545] uppercase tracking-wide">ADVANCED CORPORATE COMPLIANCE & ETHICS 2024</h3>
-          <span className="mt-2 md:mt-0 px-3 py-1 bg-neutral-200 text-neutral-700 text-[10px] font-bold rounded uppercase tracking-widest">MODULE 4 OF 8</span>
-        </div>
-        
-        <div className="mb-8">
-          <div className="flex justify-between items-end mb-2">
-            <span className="text-xs font-bold text-[#E5832E] uppercase tracking-widest">Progress</span>
-            <span className="text-sm font-black text-[#0B2545]">65%</span>
+      {recentCourse ? (
+        <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <h3 className="text-lg font-black text-[#0B2545] uppercase tracking-wide">{recentCourse.Program?.title || 'Active Course'}</h3>
+            <span className="mt-2 md:mt-0 px-3 py-1 bg-neutral-200 text-neutral-700 text-[10px] font-bold rounded uppercase tracking-widest">IN PROGRESS</span>
           </div>
-          <div className="w-full bg-neutral-200 rounded-full h-2">
-            <div className="bg-[#D47225] h-2 rounded-full" style={{ width: '65%' }}></div>
+          
+          <div className="mb-8">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold text-[#E5832E] uppercase tracking-widest">Progress</span>
+              <span className="text-sm font-black text-[#0B2545]">{recentCourse.progress || 0}%</span>
+            </div>
+            <div className="w-full bg-neutral-200 rounded-full h-2">
+              <div className="bg-[#D47225] h-2 rounded-full" style={{ width: `${recentCourse.progress || 0}%` }}></div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-end">
-          <Link href="/course/2/material" className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-8 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors">
-            RESUME COURSE / LANJUT BELAJAR
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div className="flex justify-end">
+            <Link href={`/course/${recentCourse.programId}/material`} className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-8 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors">
+              RESUME COURSE / LANJUT BELAJAR
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm mb-8 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-400 mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          </div>
+          <h3 className="text-lg font-black text-[#0B2545] mb-2">Belum Ada Pelatihan Aktif</h3>
+          <p className="text-neutral-500 text-sm mb-6 max-w-md">Anda belum memulai pelatihan apa pun. Silakan telusuri katalog kami untuk menemukan program yang sesuai dengan kebutuhan Anda.</p>
+          <Link href="/dashboard/catalog" className="bg-[#0B2545] hover:bg-[#13325B] text-white px-8 py-3 rounded text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-[#0B2545]/20">
+            Jelajahi Katalog
           </Link>
         </div>
-      </div>
+      )}
 
       {/* Bottom Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -86,7 +151,7 @@ export default function StudentDashboard() {
         <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-base font-black text-[#0B2545] uppercase tracking-wide">JADWAL COACHING & ASESMEN</h3>
-            <a href="#" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">VIEW ALL</a>
+            <Link href="/dashboard/schedule" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">VIEW ALL</Link>
           </div>
           
           <div className="space-y-4">
@@ -117,7 +182,7 @@ export default function StudentDashboard() {
         <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-base font-black text-[#0B2545] uppercase tracking-wide">FILE UNDUHAN TERBARU</h3>
-            <a href="#" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">BROWSE FILES</a>
+            <Link href="/dashboard/downloads" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">BROWSE FILES</Link>
           </div>
           
           <div className="space-y-4">

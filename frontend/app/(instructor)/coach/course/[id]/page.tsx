@@ -8,13 +8,92 @@ export default function CourseDetailPage() {
   const params = useParams();
   // --- States ---
   const [isOpen, setIsOpen] = useState(false);
+  const [courseTitle, setCourseTitle] = useState('Loading...');
+  const [courseProgramName, setCourseProgramName] = useState('PROGRAM');
+  const [courseBidangName, setCourseBidangName] = useState('BIDANG');
+  const [videoCount, setVideoCount] = useState(0);
+  const [pdfCount, setPdfCount] = useState(0);
+  
+  useEffect(() => {
+    fetch(`/api/programs/${params?.id}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      setCourseTitle(data.title);
+      setIsOpen(data.isPublished);
+      if (data.category) {
+        const parts = data.category.split('||');
+        let progName = parts[0].replace(/ Program/gi, '').trim();
+        setCourseProgramName(progName);
+        if (parts.length > 1) setCourseBidangName(parts[1].trim());
+      }
+      if (data.description) {
+        try {
+          const parsed = JSON.parse(data.description);
+          setAbout(parsed.about || '');
+          setPrice(parsed.price || '');
+          setCertificateUrl(parsed.certificateUrl || '');
+          setInstructorName(parsed.instructorName || '');
+          setInstructorRole(parsed.instructorRole || '');
+          setInstructorImage(parsed.instructorImage || null);
+          setLearnItems(parsed.learnItems || []);
+          setChapters(parsed.chapters || []);
+          
+          let videos = 0;
+          let pdfs = 0;
+          if (Array.isArray(parsed.chapters)) {
+            parsed.chapters.forEach((ch: any) => {
+              if (Array.isArray(ch.subChapters)) {
+                ch.subChapters.forEach((sub: any) => {
+                  if (Array.isArray(sub.blocks)) {
+                    sub.blocks.forEach((blk: any) => {
+                      const t = blk.type || '';
+                      const c = (blk.content || '').toLowerCase();
+                      if (t === 'video') videos++;
+                      else if (t === 'file' || t === 'pdf') pdfs++;
+                      else if (t === 'embed_video' || t === 'embed_pdf' || t === 'embed') {
+                        if (c.includes('youtube') || c.includes('youtu.be') || c.includes('vimeo')) {
+                          videos++;
+                        } else if (c.includes('drive.google.com') || c.includes('.pdf') || t === 'embed_pdf') {
+                          pdfs++;
+                        } else {
+                          if (t === 'embed_video') videos++;
+                          else pdfs++;
+                        }
+                      }
+                    });
+                  }
+                });
+              }
+            });
+          }
+          setVideoCount(videos);
+          setPdfCount(pdfs);
+
+          setHistory([{
+            about: parsed.about || '',
+            price: parsed.price || '',
+            instructorName: parsed.instructorName || '',
+            instructorRole: parsed.instructorRole || '',
+            learnItems: parsed.learnItems || [],
+            chapters: parsed.chapters || []
+          }]);
+        } catch (e) {
+          setAbout(data.description);
+        }
+      }
+    });
+  }, [params?.id]);
   
   // Form States
   const [about, setAbout] = useState('');
   const [price, setPrice] = useState('');
+  const [certificateUrl, setCertificateUrl] = useState('');
   const [instructorName, setInstructorName] = useState('');
   const [instructorRole, setInstructorRole] = useState('');
   const [instructorImage, setInstructorImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamic Lists
   const [learnItems, setLearnItems] = useState<{title: string, desc: string}[]>([]);
@@ -22,7 +101,7 @@ export default function CourseDetailPage() {
     id: number, 
     title: string, 
     isExpanded: boolean, 
-    subChapters: string[]
+    subChapters: any[]
   }[]>([]);
 
   // History for Undo/Redo
@@ -61,6 +140,7 @@ export default function CourseDetailPage() {
   const applyState = (state: any) => {
     setAbout(state.about);
     setPrice(state.price);
+    setCertificateUrl(state.certificateUrl || '');
     setInstructorName(state.instructorName);
     setInstructorRole(state.instructorRole);
     setLearnItems([...state.learnItems]);
@@ -72,6 +152,7 @@ export default function CourseDetailPage() {
     saveToHistory({
       about,
       price,
+      certificateUrl,
       instructorName,
       instructorRole,
       learnItems: [...learnItems],
@@ -107,7 +188,11 @@ export default function CourseDetailPage() {
     e.stopPropagation();
     setChapters(chapters.map(ch => {
       if (ch.id === chapterId) {
-        return { ...ch, subChapters: [...ch.subChapters, ''], isExpanded: true };
+        return { 
+          ...ch, 
+          subChapters: [...ch.subChapters, { id: Date.now(), title: '', duration: '0', isActive: false, type: 'material' }], 
+          isExpanded: true 
+        };
       }
       return ch;
     }));
@@ -118,7 +203,12 @@ export default function CourseDetailPage() {
     setChapters(chapters.map(ch => {
       if (ch.id === chapterId) {
         const newSubs = [...ch.subChapters];
-        newSubs[subIndex] = value;
+        const currentSub = newSubs[subIndex];
+        if (typeof currentSub === 'string') {
+          newSubs[subIndex] = value;
+        } else {
+          newSubs[subIndex] = { ...currentSub, title: value };
+        }
         return { ...ch, subChapters: newSubs };
       }
       return ch;
@@ -129,67 +219,81 @@ export default function CourseDetailPage() {
     setChapters(chapters.map(ch => ch.id === chapterId ? { ...ch, isExpanded: !ch.isExpanded } : ch));
   };
 
-  // Mock Save Data
-  const handleSimpanDetail = () => {
-    // If it's already mostly filled, we don't overwrite, just commit history
-    // If it's empty, let's auto-fill with the mock data for demonstration
-    if (about === '' && learnItems.length === 0 && chapters.length === 0) {
-      setAbout('Unlock the complexities of corporate strategy in this intensive masterclass designed for future leaders. Gain insights into competitive positioning, organizational growth, and dynamic market entry strategies. This program combines academic rigor with practical frameworks used by Fortune 500 consulting firms.\n\nParticipants will deep dive into financial modeling, cross-functional leadership, and sustainable business transformation in the digital era.');
-      setPrice('4.999.000');
-      setInstructorName('Dr. Jane Smith');
-      setInstructorRole('Senior Strategy Consultant');
-      setInstructorImage('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150');
+  // API Save Data
+  const handleSimpanDetail = async () => {
+    try {
+      const payload = {
+        isPublished: isOpen,
+        description: JSON.stringify({
+          about, price, certificateUrl, instructorName, instructorRole, instructorImage, learnItems, chapters
+        })
+      };
       
-      setLearnItems([
-        { title: 'Framework Design', desc: 'Define and execute competitive business frameworks tailored for global expansion.' },
-        { title: 'Market Analysis', desc: 'Analyze complex market data to drive strategic decisions and risk mitigation.' },
-        { title: 'Change Management', desc: 'Master organizational change management principles for agile environments.' },
-        { title: 'Team Leadership', desc: 'Lead high-performance teams through volatile and uncertain market conditions.' },
-      ]);
-
-      setChapters([
-        { id: 1, title: 'Foundation and Core Principles', isExpanded: true, subChapters: ['5 Foundation', '6 Core Principles'] },
-        { id: 2, title: 'Strategic Implementation', isExpanded: false, subChapters: [] },
-        { id: 3, title: 'Organizational Change Management', isExpanded: false, subChapters: [] },
-        { id: 4, title: 'Capstone Project & Evaluation', isExpanded: false, subChapters: [] },
-      ]);
-
-      setTimeout(commitHistory, 100);
-    } else {
-      // Just save to db (mock)
-      alert("Detail Course berhasil disimpan!");
+      const res = await fetch(`/api/programs/${params?.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        alert("Detail Course berhasil disimpan!");
+      } else {
+        const errText = await res.text();
+        console.error("Save error:", res.status, errText);
+        alert("Gagal menyimpan detail course: " + res.status + " " + errText);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan.");
     }
   };
 
   // Handle Image Upload Simulation
-  const handleImageUpload = () => {
-    const prompt = window.confirm("Simulasi: Upload foto profil instruktur? (Klik OK untuk menggunakan foto dummy)");
-    if (prompt) {
-      setInstructorImage('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150');
-      commitHistory();
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setInstructorImage(reader.result as string);
+        commitHistory();
+      };
+      reader.readAsDataURL(file);
     }
   };
+  
+  const handleTriggerUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) setCurrentUser(JSON.parse(userStr));
+  }, []);
 
   return (
     <div className="flex flex-col min-h-full bg-white">
       {/* Top Bar */}
       <div className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-        <div className="text-[10px] md:text-xs font-bold text-neutral-500">
-          <Link href="/coach/course" className="hover:text-[#D47225] transition-colors">Program &gt; ... &gt;</Link> <span className="text-[#0B2545] font-black ml-1">Course Advanced Negotiation Strategy</span>
+        <div className="text-[10px] md:text-xs font-bold text-neutral-500 truncate mr-4">
+          <Link href="/coach/course" className="hover:text-[#D47225] transition-colors shrink-0">{courseProgramName.toUpperCase()}</Link> <span className="text-[#0B2545] font-black ml-1 truncate">&gt; Course {courseTitle}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative hidden md:block">
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </span>
-            <input type="text" placeholder="Cari Course" className="pl-4 pr-10 py-1.5 border border-neutral-300 rounded-full text-xs w-48 focus:outline-none focus:border-[#0B2545]" />
-          </div>
+        <div className="flex items-center gap-4 shrink-0">
+
           <div className="text-right hidden md:block">
-            <div className="text-xs font-bold text-[#0B2545]">Super Admin</div>
-            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">SYSTEM AUTHORITY</div>
+            <div className="text-xs font-bold text-[#0B2545]">{currentUser?.name || 'Loading...'}</div>
+            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{currentUser?.role || 'INSTRUKTUR'}</div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm">
-            SA
+          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
+            {currentUser?.avatar ? (
+              <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              (currentUser?.name || 'CP').substring(0, 2).toUpperCase()
+            )}
           </div>
         </div>
       </div>
@@ -198,14 +302,14 @@ export default function CourseDetailPage() {
         {/* Hero Section */}
         <div className="bg-[#0B2545] rounded-3xl p-10 flex flex-col lg:flex-row justify-between items-center relative overflow-hidden mb-8 shadow-lg">
           <div className="lg:w-1/2 relative z-10 text-white">
-            <h1 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">Advanced<br/>Negotiation<br/>Strategy</h1>
+            <h1 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">{courseTitle}</h1>
             
             <div className="flex flex-wrap gap-2 mb-6">
               <span className="bg-[#964B13] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
-                PENJUALAN DAN PEMASARAN (SALES AND MARKETING TRAINING)
+                {courseBidangName.toUpperCase()}
               </span>
               <span className="bg-[#EAF1F8] text-[#0B2545] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
-                CORPORATE
+                {courseProgramName.toUpperCase()}
               </span>
             </div>
 
@@ -356,12 +460,6 @@ export default function CourseDetailPage() {
                         >
                           + Sub-bab
                         </button>
-                        <button 
-                          onClick={(e) => e.stopPropagation()}
-                          className="border border-[#0B2545] text-[#0B2545] hover:bg-[#0B2545] hover:text-white transition-colors text-[9px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap"
-                        >
-                          Materi
-                        </button>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transform transition-transform ${ch.isExpanded ? 'rotate-180' : ''}`}>
                           <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
@@ -370,14 +468,14 @@ export default function CourseDetailPage() {
                     
                     {ch.isExpanded && ch.subChapters.length > 0 && (
                       <div className="border-t border-neutral-100 bg-neutral-50/50 p-4 space-y-2">
-                        {ch.subChapters.map((sub, sIdx) => (
-                          <div key={sIdx} className="bg-white p-4 rounded-xl border border-neutral-200 flex items-center gap-4 text-sm font-bold text-[#0B2545]">
+                        {ch.subChapters.map((sub: any, sIdx: number) => (
+                          <div key={sub.id || sIdx} className="bg-white p-4 rounded-xl border border-neutral-200 flex items-center gap-4 text-sm font-bold text-[#0B2545]">
                             <span className="text-[#964B13] shrink-0">{idx + 1}.{sIdx + 1}</span> 
                             <span className="shrink-0">Sub-bab {sIdx + 1} :</span>
                             <input 
                               type="text"
                               placeholder="Ketik nama sub-bab"
-                              value={sub}
+                              value={typeof sub === 'string' ? sub : sub.title}
                               onChange={(e) => handleSubChapterChange(ch.id, sIdx, e.target.value)}
                               onBlur={commitHistory}
                               className="w-full bg-transparent font-bold text-[#0B2545] focus:outline-none placeholder:text-neutral-400"
@@ -393,6 +491,7 @@ export default function CourseDetailPage() {
                                 commitHistory();
                               }}
                               className="text-neutral-400 hover:text-red-500"
+                              title="Hapus Sub-bab"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
@@ -440,14 +539,20 @@ export default function CourseDetailPage() {
                 <p className="text-xs font-bold text-[#0B2545]">This Course Includes:</p>
                 <div className="flex items-center gap-3 text-sm text-neutral-600">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5A623" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="10 8 16 12 10 16"></polyline></svg>
-                  24 Video
+                  {videoCount} Video
                 </div>
                 <div className="flex items-center gap-3 text-sm text-neutral-600">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5A623" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  15 PDF
+                  {pdfCount} PDF
+                  </div>
+
+                <div className="mt-6 border-t border-neutral-100 pt-6">
+                  <p className="text-xs font-bold text-[#0B2545] mb-2 uppercase tracking-wider">Link Sertifikat Course</p>
+                  <input type="text" placeholder="https://drive.google.com/..." className="w-full border border-neutral-300 rounded-lg p-3 text-sm focus:outline-none focus:border-[#0B2545] focus:ring-1 focus:ring-[#0B2545]" value={certificateUrl} onChange={e => setCertificateUrl(e.target.value)} onBlur={commitHistory} />
+                  <p className="text-xs text-neutral-400 mt-2">Link ini akan muncul di halaman E-Certificate peserta jika kursus sudah diselesaikan 100%.</p>
+                </div>
                 </div>
               </div>
-            </div>
 
             {/* Instructor Box */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">
@@ -455,8 +560,9 @@ export default function CourseDetailPage() {
                 INSTRUKTUR
               </p>
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={handleImageUpload}
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                  <button 
+                  onClick={handleTriggerUpload}
                   className="w-14 h-14 rounded-xl overflow-hidden bg-[#F4E3D7] hover:bg-[#EBD1BF] transition-colors flex items-center justify-center shrink-0 border border-transparent hover:border-[#D47225] relative group"
                   title="Upload Foto"
                 >

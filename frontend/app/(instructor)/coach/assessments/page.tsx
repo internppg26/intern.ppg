@@ -8,15 +8,52 @@ export default function AssessmentsPage() {
   const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
+  
+  const [assessments, setAssessments] = useState<any[]>([]);
 
-  const assessments = [
-    { id: 1, name: 'Siti Rahmawati', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150', cohort: 'Batch #44 - UX Specialization', title: 'Final Portfolio Review: Interaction Design', module: 'Module 4: Advanced Prototyping', date: 'Oct 24, 2023', time: 'Overdue (2h)', status: 'NEEDS GRADING' },
-    { id: 2, name: 'Budi Pratama', initials: 'BP', cohort: 'Batch #44 - UX Specialization', title: 'User Persona Research Docs', module: 'Module 1: User Psychology', date: 'Oct 24, 2023', time: '4:15 PM', status: 'NEEDS GRADING' },
-    { id: 3, name: 'Farhan Hakim', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=150', cohort: 'Batch #42 - Data Science', title: 'Python Scripting Midterm', module: 'Module 2: Automation', date: 'Oct 23, 2023', time: '10:30 AM', status: 'REVIEWED' },
-    { id: 4, name: 'Anisa Putri', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150', cohort: 'Batch #44 - UX Specialization', title: 'Final Portfolio Review: Interaction Design', module: 'Module 4: Advanced Prototyping', date: 'Oct 22, 2023', time: '6:00 PM', status: 'NEEDS GRADING' },
-    { id: 5, name: 'Andi Wijaya', initials: 'AW', cohort: 'Batch #42 - Data Science', title: 'Machine Learning Basics', module: 'Module 3: ML', date: 'Oct 21, 2023', time: '11:00 AM', status: 'REVIEWED' },
-    { id: 6, name: 'Maya Sari', initials: 'MS', cohort: 'Batch #44 - UX Specialization', title: 'Wireframing Task', module: 'Module 3: UI Design', date: 'Oct 20, 2023', time: '09:00 AM', status: 'NEEDS GRADING' },
-  ];
+  React.useEffect(() => {
+    const fetchAssessments = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const res = await fetch('/api/exams', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const formatted = data.map((ex: any) => {
+            const studentName = ex.student?.name || 'Unknown';
+            const initials = studentName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            const dateObj = new Date(ex.createdAt);
+            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            const needsGrading = ex.score === null || ex.passed === null;
+
+            return {
+              id: ex.id,
+              name: studentName,
+              initials,
+              avatar: null,
+              cohort: ex.student?.email || 'Student',
+              title: ex.Module?.title || 'Unknown Exam',
+              module: 'Module Assessment',
+              date: dateStr,
+              time: timeStr,
+              status: needsGrading ? 'NEEDS GRADING' : 'REVIEWED',
+              needsGrading
+            };
+          });
+          setAssessments(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+      }
+    };
+    fetchAssessments();
+  }, []);
 
   // Filtering Logic
   const filteredData = assessments.filter(item => {

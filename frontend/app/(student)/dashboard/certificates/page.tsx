@@ -4,29 +4,61 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function CertificatesPage() {
-  const certificates = [
-    {
-      id: 1,
-      title: "Corporate Strategy Masterclass",
-      issued: "25 Oct 2023",
-      certId: "PPG-CERT-9981",
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070"
-    },
-    {
-      id: 2,
-      title: "Financial Analysis for Managers",
-      issued: "12 Sep 2023",
-      certId: "PPG-CERT-8820",
-      image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=2036"
-    },
-    {
-      id: 3,
-      title: "Human Resource Leadership",
-      issued: "05 Aug 2023",
-      certId: "PPG-CERT-7734",
-      image: null
+  const [certificates, setCertificates] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [userName, setUserName] = React.useState('User');
+
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setUserName(user.name || 'User');
+      } catch (e) {}
     }
-  ];
+
+    fetch('/api/enrollments', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        const completed = data.filter(e => e.status === 'completed' || e.isCompleted === true);
+        const certs = completed.map((enr) => {
+           const course = enr.Program;
+           if (!course) return null;
+           
+           let certificateUrl = '';
+           try {
+             if (course.description) {
+               const parsed = JSON.parse(course.description);
+               certificateUrl = parsed.certificateUrl || '';
+             }
+           } catch (e) {}
+
+           return {
+             id: enr.id,
+             title: course.title,
+             issued: new Date(enr.completedAt || enr.updatedAt || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+             certId: `PPG-CERT-${enr.id.toString().padStart(4, '0')}`,
+             image: course.thumbnail && course.thumbnail !== '/Logo_Performa_Puncak.png' ? course.thumbnail : 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070',
+             certificateUrl
+           };
+        }).filter(Boolean);
+        setCertificates(certs);
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+  }, []);
+
+  const handlePrint = (cert: any) => {
+    if (cert.certificateUrl) {
+      window.open(cert.certificateUrl, '_blank');
+    } else {
+      alert("Sertifikat untuk pelatihan ini belum diunggah oleh admin/coach. Mohon tunggu atau hubungi mereka.");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -52,7 +84,9 @@ export default function CertificatesPage() {
 
         {/* Certificate Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {certificates.map((cert) => (
+          {loading ? (
+            <div className="col-span-2 text-center py-10">Memuat sertifikat...</div>
+          ) : certificates.map((cert) => (
             <div key={cert.id} className="bg-white border border-neutral-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col">
               
               {/* Image Preview Area */}
@@ -102,7 +136,7 @@ export default function CertificatesPage() {
                 </div>
 
                 <div className="flex gap-4 mt-auto">
-                  <button className="flex-1 bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full font-bold text-sm transition-colors shadow-md shadow-[#D47225]/20">
+                  <button onClick={() => handlePrint(cert)} className="flex-1 bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full font-bold text-sm transition-colors shadow-md shadow-[#D47225]/20">
                     Unduh PDF
                   </button>
                   <button className="flex-1 border-2 border-neutral-300 text-neutral-600 hover:border-[#0B2545] hover:text-[#0B2545] py-3 rounded-full font-bold text-sm transition-colors flex items-center justify-center gap-2">

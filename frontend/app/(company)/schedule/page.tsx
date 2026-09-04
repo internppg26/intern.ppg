@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 interface ScheduleEvent {
   id: number;
@@ -14,38 +14,46 @@ interface ScheduleEvent {
 }
 
 export default function PublicSchedulePage() {
-  const [events] = useState<ScheduleEvent[]>([
-    {
-      id: 1,
-      title: 'Sesi Coaching: Agile Leadership',
-      desc: 'Pelatihan intensif untuk level manajerial mengenai kepemimpinan di era digital.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/1',
-      date: '2026-08-15',
-      time: '09:00',
-      location: 'Performa Puncak Group Office'
-    },
-    {
-      id: 2,
-      title: 'Pembukaan Pendaftaran: Course Komunikasi Bisnis',
-      desc: 'Periode pendaftaran batch 4 resmi dibuka.',
-      tag: 'Government',
-      link: 'https://performa.com/course/2',
-      date: '2026-08-22',
-      time: '08:00',
-      location: 'Online'
-    },
-    {
-      id: 3,
-      title: 'Public Training: Design Thinking',
-      desc: 'Workshop offline 2 hari penuh.',
-      tag: 'Corporate',
-      link: 'https://performa.com/course/3',
-      date: '2026-09-05',
-      time: '10:00',
-      location: 'Aston Hotel'
-    }
-  ]);
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/schedules/public');
+        if (res.ok) {
+          const data = await res.json();
+          const mappedData = data.map((item: any) => {
+            let desc = item.notes || '';
+            let location = 'Online';
+            if (desc.includes('\n\nLokasi: ')) {
+              const parts = desc.split('\n\nLokasi: ');
+              desc = parts[0];
+              location = parts[1];
+            }
+            return {
+              ...item,
+              desc,
+              location,
+              tag: item.type || 'Corporate',
+              time: item.startTime || '00:00'
+            };
+          });
+          setEvents(mappedData);
+        } else {
+          setError('Gagal memuat jadwal');
+        }
+      } catch (err) {
+        console.error('Failed to fetch schedules:', err);
+        setError('Gagal memuat jadwal. Pastikan server berjalan.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSchedules();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('Select Month');
@@ -160,6 +168,16 @@ export default function PublicSchedulePage() {
         </div>
 
         {/* Schedule List */}
+        {loading && (
+          <div className="text-center py-12 text-neutral-500">
+            <p>Memuat jadwal...</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-12 text-red-500">
+            <p>{error}</p>
+          </div>
+        )}
         <div className="space-y-12 mb-16">
           {Object.entries(groupedEvents.groups).map(([groupKey, groupEventsList]) => (
             <div key={groupKey}>
@@ -200,12 +218,14 @@ export default function PublicSchedulePage() {
                         <button className="w-9 h-9 flex items-center justify-center border border-neutral-200 rounded-md text-neutral-500 hover:bg-neutral-50 transition-colors">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                         </button>
-                        <button 
-                          onClick={() => window.location.href = ev.link}
-                          className="bg-[#0B2545] hover:bg-[#15345E] text-white px-6 py-2.5 rounded-md text-sm font-bold transition-colors"
+                        <a 
+                          href={ev.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#0B2545] hover:bg-[#15345E] text-white px-6 py-2.5 rounded-md text-sm font-bold transition-colors block text-center"
                         >
-                          Daftar
-                        </button>
+                          Lihat Detail
+                        </a>
                       </div>
                     </div>
                   );

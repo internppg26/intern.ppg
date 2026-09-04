@@ -4,96 +4,62 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function CoachCoursePage() {
-  // Mock State for Courses
-  // isEnrolled controls whether they see "Enroll" vs "Material/Detail"
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      title: 'ADVANCED LEADERSHIP STRATEGY',
-      tag: 'STRATEGY',
-      program: 'Corporate Program',
-      desc: 'Elevate your executive capabilities with data-driven strategic planning and human-centric...',
-      duration: '30 Days Access',
-      instructor: 'Dr. Jajang Sutarman',
-      img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-    {
-      id: 2,
-      title: 'DIGITAL TRANSFORMATION FOR SMBS',
-      tag: 'DIGITAL',
-      program: 'Entrepreneurial Program',
-      desc: 'Practical roadmap for small businesses to scale using modern cloud infrastructure and AI tools.',
-      duration: '30 Days Access',
-      instructor: 'Dr. Jajang Sutarman',
-      img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-    {
-      id: 3,
-      title: 'PUBLIC POLICY CERTIFICATION',
-      tag: 'POLICY',
-      program: 'Government Program',
-      desc: 'Understanding modern governance, ethics, and policy analysis for the 21st-century public servant.',
-      duration: '30 Days Access',
-      instructor: 'Dr. Jajang Sutarman',
-      img: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-    {
-      id: 4,
-      title: 'AGILE MANAGEMENT WORKSHOP',
-      tag: 'PROFESSIONAL',
-      program: 'Educational Program',
-      desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
-      duration: 'Flexible Duration',
-      instructor: 'Expert Facilitator',
-      img: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-    {
-      id: 5,
-      title: 'SUSTAINABILITY IN TECH',
-      tag: 'PROFESSIONAL',
-      program: 'Certification Program',
-      desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
-      duration: 'Flexible Duration',
-      instructor: 'Expert Facilitator',
-      img: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-    {
-      id: 6,
-      title: 'GLOBAL MARKETING ESSENTIALS',
-      tag: 'PROFESSIONAL',
-      program: 'Public & In-House Program',
-      desc: 'Advanced professional training designed to help you master modern industry standards and excel...',
-      duration: 'Flexible Duration',
-      instructor: 'Expert Facilitator',
-      img: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600',
-      isEnrolled: false
-    },
-  ]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch('/api/programs?all=true', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        setCurrentUser(user);
+
+        // Filter: only show courses with no instructor OR where this coach is the instructor
+        const visible = data.filter((p: any) => p.instructorId === null || (user && p.instructorId === user.id));
+        
+        setCourses(visible.map((p: any) => {
+          let program = 'Program';
+          if (p.category && p.category.includes('||')) {
+            program = p.category.split('||')[0];
+          }
+          let safeDesc = p.description || '';
+          let customInstructor = '';
+          try {
+            const parsed = JSON.parse(safeDesc);
+            safeDesc = parsed.shortDesc || parsed.about || safeDesc;
+            customInstructor = parsed.instructorName || '';
+          } catch(e) {}
+          
+          return {
+            id: p.id,
+            title: p.title,
+            tag: program.replace(/ Program/gi, '').toUpperCase(),
+            program: program,
+            desc: safeDesc,
+            duration: p.duration ? `${p.duration} Days Access` : '30 Days Access',
+            instructor: customInstructor || (p.instructor ? p.instructor.name : 'Belum Ada Instruktur'),
+            img: p.thumbnail !== '/Logo_Performa_Puncak.png' ? p.thumbnail : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
+            isEnrolled: p.instructorId !== null
+          };
+        }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [programFilter, setProgramFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 3;
-
-  // Load from sessionStorage on mount to persist enrolled status across page navigation
-  useEffect(() => {
-    const savedEnrolled = sessionStorage.getItem('enrolledCourses');
-    if (savedEnrolled) {
-      try {
-        const enrolledIds = JSON.parse(savedEnrolled);
-        setCourses(prev => prev.map(c => 
-          enrolledIds.includes(c.id) ? { ...c, isEnrolled: true } : c
-        ));
-      } catch (e) {
-        console.error("Could not parse enrolled courses from sessionStorage", e);
-      }
-    }
-  }, []);
 
   // Modal State
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
@@ -106,26 +72,27 @@ export default function CoachCoursePage() {
     setIsEnrollModalOpen(true);
   };
 
-  const handleEnrollSubmit = (e: React.FormEvent) => {
+  const handleEnrollSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedCourseId && enrollCode.trim()) {
-      // Update state
-      setCourses(prev => prev.map(c => 
-        c.id === selectedCourseId ? { ...c, isEnrolled: true } : c
-      ));
-      
-      // Update sessionStorage
-      const savedEnrolled = sessionStorage.getItem('enrolledCourses');
-      let enrolledIds: number[] = [];
-      if (savedEnrolled) {
-        try { enrolledIds = JSON.parse(savedEnrolled); } catch(e) {}
+    if (selectedCourseId) {
+      try {
+        const res = await fetch(`/api/programs/${selectedCourseId}/claim`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (res.ok) {
+          setIsEnrollModalOpen(false);
+          fetchCourses();
+        } else {
+          const errText = await res.text();
+          alert(`Gagal mengambil kelas ini (Status: ${res.status}): ${errText}`);
+        }
+      } catch (err: any) {
+        console.error(err);
+        alert(`Network Error: ${err.message}`);
       }
-      if (!enrolledIds.includes(selectedCourseId)) {
-        enrolledIds.push(selectedCourseId);
-        sessionStorage.setItem('enrolledCourses', JSON.stringify(enrolledIds));
-      }
-      
-      setIsEnrollModalOpen(false);
     }
   };
 
@@ -134,15 +101,19 @@ export default function CoachCoursePage() {
       {/* Top Bar */}
       <div className="bg-white border-b border-neutral-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="text-[10px] md:text-xs font-bold text-neutral-500 uppercase tracking-wide">
-          Program &gt; ... &gt; <span className="text-[#0B2545]">Daftar Course Bidang Penjualan dan Pemasaran...</span>
+          <span className="text-[#0B2545]">PROGRAM</span>
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="text-right hidden md:block">
-            <div className="text-xs font-bold text-[#0B2545]">Coach Pratama</div>
-            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">INSTRUKTUR</div>
+            <div className="text-xs font-bold text-[#0B2545]">{currentUser?.name || currentUser?.username || 'Coach'}</div>
+            <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">{currentUser?.role || 'INSTRUKTUR'}</div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm">
-            CP
+          <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm overflow-hidden uppercase">
+            {currentUser?.avatar ? (
+              <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              (currentUser?.name?.[0] || currentUser?.username?.[0] || 'C')
+            )}
           </div>
         </div>
       </div>
@@ -300,25 +271,19 @@ export default function CoachCoursePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border-2 border-[#0B2545]">
             <div className="p-8">
-              <h2 className="text-xl font-medium text-center text-black mb-8">Masukkan Kode Enroll</h2>
+              <h2 className="text-xl font-medium text-center text-black mb-8">Klaim Course</h2>
               
-              <form onSubmit={handleEnrollSubmit} className="space-y-6">
-                <div>
-                  <input 
-                    type="text" 
-                    placeholder="cth: 09112023"
-                    value={enrollCode}
-                    onChange={(e) => setEnrollCode(e.target.value)}
-                    required
-                    className="w-full border border-[#0B2545] rounded p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#0B2545]"
-                  />
+              <form onSubmit={handleEnrollSubmit}>
+                <div className="mb-8">
+                  <p className="text-sm text-neutral-600 mb-4 text-center">
+                    Apakah Anda yakin ingin mengklaim (mengambil alih) kelas ini sebagai Instruktur?
+                  </p>
                 </div>
-                
                 <button 
                   type="submit"
-                  className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white py-3.5 rounded font-bold text-sm transition-colors"
+                  className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white py-3 rounded text-sm font-bold transition-colors shadow-lg"
                 >
-                  Verifikasi Kode Enroll
+                  Ya, Klaim Kelas Ini
                 </button>
               </form>
             </div>

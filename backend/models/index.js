@@ -16,6 +16,7 @@ const Gallery = require('./Gallery')(sequelize, DataTypes);
 const File = require('./File')(sequelize, DataTypes);
 const Exam = require('./Exam')(sequelize, DataTypes);
 const Certificate = require('./Certificate')(sequelize, DataTypes);
+const Schedule = require('./Schedule')(sequelize, DataTypes);
 
 // Associations
 User.hasMany(Enrollment, { foreignKey: 'studentId' });
@@ -53,6 +54,12 @@ Gallery.belongsTo(User, { foreignKey: 'uploaderId', as: 'uploader' });
 User.hasMany(File, { foreignKey: 'uploaderId' });
 File.belongsTo(User, { foreignKey: 'uploaderId', as: 'uploader' });
 
+User.hasMany(Schedule, { foreignKey: 'instructorId' });
+Schedule.belongsTo(User, { foreignKey: 'instructorId', as: 'instructor' });
+
+User.belongsToMany(Schedule, { through: 'ScheduleParticipants', foreignKey: 'userId', as: 'schedules' });
+Schedule.belongsToMany(User, { through: 'ScheduleParticipants', foreignKey: 'scheduleId', as: 'participants' });
+
 const db = {
   sequelize,
   Sequelize,
@@ -65,6 +72,7 @@ const db = {
   File,
   Exam,
   Certificate,
+  Schedule,
 };
 
 module.exports = db;

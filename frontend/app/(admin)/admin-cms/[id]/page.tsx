@@ -28,27 +28,38 @@ function AdminCMSDetailContent() {
   const [blocks, setBlocks] = useState<Block[]>([]);
 
   useEffect(() => {
-    // Read from URL params if available
-    const urlTitle = searchParams.get('title');
-    const urlTag = searchParams.get('tag');
-    const urlDesc = searchParams.get('desc');
-    const urlImage = searchParams.get('image');
-
-    if (urlTitle || urlTag) {
-      setTag(urlTag || 'STRATEGY');
-      setTitle(urlTitle || 'UNTITLED');
-      setDesc(urlDesc || '');
-      setCoverImage(urlImage || '');
+    if (params.id) {
+      fetch(`/api/articles/${params.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.title) {
+            setTitle(data.title);
+            let parsedDesc = data.content || '';
+            let parsedBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
+            try {
+              const parsed = JSON.parse(data.content);
+              if (parsed && typeof parsed === 'object') {
+                parsedDesc = parsed.desc || '';
+                if (parsed.blocks && parsed.blocks.length > 0) {
+                  parsedBlocks = parsed.blocks as Block[];
+                }
+              }
+            } catch (e) {}
+            
+            setDesc(parsedDesc);
+            setTag(data.category || 'NEWS');
+            setCoverImage(data.thumbnail !== '/Logo_Performa_Puncak.png' ? data.thumbnail : '');
+            
+            setBlocks(parsedBlocks);
+            setHistory([JSON.parse(JSON.stringify(parsedBlocks))]);
+          }
+        })
+        .catch(err => console.error('Failed to load article:', err));
     } else {
-      setTag('NEW TAG');
-      setTitle('NEW ARTICLE TITLE');
-      setDesc('Short description for the new article goes here.');
+      const initialBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
+      setBlocks(initialBlocks);
+      setHistory([JSON.parse(JSON.stringify(initialBlocks))]);
     }
-    
-    // Always initialize blocks as empty
-    const initialBlocks: Block[] = [{ id: '1', type: 'empty', content: '' }];
-    setBlocks(initialBlocks);
-    setHistory([JSON.parse(JSON.stringify(initialBlocks))]);
   }, [params.id, searchParams]);
 
   const [showSlashMenu, setShowSlashMenu] = useState<string | null>(null);
@@ -131,7 +142,11 @@ function AdminCMSDetailContent() {
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setCoverImage(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -404,25 +419,26 @@ function AdminCMSDetailContent() {
           {/* Action Buttons */}
           <div className="mt-8 flex items-center gap-4 ml-8">
             <button 
-              onClick={() => {
-                const saved = localStorage.getItem('cms_articles');
-                if (saved) {
-                  let articles = JSON.parse(saved);
-                  const articleId = Number(params.id);
-                  articles = articles.map((article: any) => {
-                    if (article.id === articleId) {
-                      return {
-                        ...article,
-                        title,
-                        tag,
-                        desc,
-                        image: coverImage || article.image
-                      };
-                    }
-                    return article;
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/articles/${params.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: title,
+                      content: JSON.stringify({ desc: desc, blocks: blocks }),
+                      category: tag.toUpperCase(),
+                      thumbnail: coverImage || '/Logo_Performa_Puncak.png'
+                    })
                   });
-                  localStorage.setItem('cms_articles', JSON.stringify(articles));
-                  alert('Berita berhasil disimpan! Perubahan akan terlihat di daftar berita.');
+                  if (res.ok) {
+                    alert('Berita berhasil disimpan! Perubahan akan terlihat di daftar berita.');
+                    router.push('/admin/cms');
+                  } else {
+                    throw new Error('Failed to update');
+                  }
+                } catch (err) {
+                  alert('Gagal menyimpan berita');
                 }
               }}
               className="bg-[#1F6E8C] hover:bg-[#155A73] text-white px-8 py-2.5 rounded text-xs font-bold transition-colors uppercase tracking-widest"

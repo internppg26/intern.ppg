@@ -15,33 +15,73 @@ type ScheduleEvent = {
 };
 
 export default function CoachDashboardPage() {
-  const [todayEvents, setTodayEvents] = React.useState<ScheduleEvent[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = React.useState<ScheduleEvent[]>([]);
+  const [activeClasses, setActiveClasses] = React.useState<number>(0);
+  const [pendingGrades, setPendingGrades] = React.useState<number>(0);
+  const [pendingExams, setPendingExams] = React.useState<any[]>([]);
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const saved = localStorage.getItem('coach_schedule_events');
-    if (saved) {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      setCurrentUser(user);
+
+      if (!token) return;
+
+      const headers = { 'Authorization': `Bearer ${token}` };
+
       try {
-        const parsed: ScheduleEvent[] = JSON.parse(saved);
-        const todayStr = new Date().toISOString().split('T')[0];
-        const filtered = parsed
-          .filter(ev => ev.date === todayStr)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        setTodayEvents(filtered);
+        // Fetch Schedules
+        const schedRes = await fetch('/api/schedules', { headers });
+        if (schedRes.ok) {
+          const schedData: ScheduleEvent[] = await schedRes.json();
+          
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          
+          const endDate = new Date(today);
+          endDate.setDate(endDate.getDate() + 3);
+          const endDateStr = endDate.toISOString().split('T')[0];
+
+          const filteredSched = schedData
+            .filter(ev => ev.date >= todayStr && ev.date <= endDateStr)
+            .sort((a, b) => {
+              if (a.date === b.date) return a.startTime.localeCompare(b.startTime);
+              return a.date.localeCompare(b.date);
+            });
+          setUpcomingEvents(filteredSched);
+        }
+
+        // Fetch Programs to count active classes
+        const progRes = await fetch('/api/programs?all=true', { headers });
+        if (progRes.ok) {
+          const progData = await progRes.json();
+          const myClasses = progData.filter((p: any) => user && p.instructorId === user.id);
+          setActiveClasses(myClasses.length);
+        }
+
+        // Fetch Exams to count pending grades
+        const examRes = await fetch('/api/exams', { headers });
+        if (examRes.ok) {
+          const examData = await examRes.json();
+          const pending = examData.filter((ex: any) => ex.score === null || ex.passed === null);
+          setPendingGrades(pending.length);
+          setPendingExams(pending);
+        }
       } catch (e) {
-        console.error("Failed to parse events", e);
+        console.error("Failed to fetch dashboard data", e);
       }
-    } else {
-      // Mock if nothing in local storage yet
-      const todayStr = new Date().toISOString().split('T')[0];
-      setTodayEvents([
-        { id: '1', title: '1-on-1 Mentoring - Budi Utomo', date: todayStr, startTime: '09:00', endTime: '10:00', type: 'Mentoring' },
-        { id: '2', title: 'Workshop: Effective Comm.', date: todayStr, startTime: '13:30', endTime: '15:30', type: 'Workshop' }
-      ]);
-    }
+    };
+
+    fetchData();
   }, []);
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full relative">
       {/* Top Bar / Search */}
       <div className="bg-white border-b border-neutral-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="relative w-full max-w-xl">
@@ -62,14 +102,17 @@ export default function CoachDashboardPage() {
         <div className="bg-[#0B2545] rounded-[2rem] p-10 flex flex-col md:flex-row items-center justify-between overflow-hidden relative mb-8 shadow-xl">
           <div className="relative z-10 md:w-3/5 text-white">
             <h1 className="text-4xl font-black mb-4 tracking-tight leading-tight">
-              Selamat Datang, Coach<br />Pratama!
+              Selamat Datang, {currentUser?.name || 'Coach'}!
             </h1>
             <p className="text-neutral-300 text-sm leading-relaxed mb-8 max-w-md">
-              Anda memiliki {todayEvents.length} sesi konsultasi hari ini dan 15 penilaian yang menunggu tinjauan Anda. Mari kita bentuk pemimpin masa depan bersama.
+              Anda memiliki {upcomingEvents.length} sesi konsultasi terdekat (3 hari ke depan).
             </p>
-            <button className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-6 py-3 rounded-full font-bold text-sm transition-colors shadow-lg shadow-[#D47225]/30">
+            {/* <button 
+              onClick={() => setIsReportModalOpen(true)}
+              className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-6 py-3 rounded-full font-bold text-sm transition-colors shadow-lg shadow-[#D47225]/30"
+            >
               Lihat Laporan Mingguan
-            </button>
+            </button> */}
           </div>
           
           {/* Decorative elements for the right side mimicking the image */}
@@ -87,16 +130,16 @@ export default function CoachDashboardPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="bg-white rounded-[2rem] p-6 border border-neutral-200 shadow-sm flex flex-col justify-between h-36">
             <div className="flex justify-between items-start">
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </div>
-              <span className="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">HARI INI</span>
+              <span className="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">TERDEKAT</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">{todayEvents.length}</h2>
+              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">{upcomingEvents.length}</h2>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">UPCOMING SESSIONS</p>
             </div>
           </div>
@@ -109,38 +152,24 @@ export default function CoachDashboardPage() {
               <span className="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">BERJALAN</span>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">2</h2>
+              <h2 className="text-3xl font-black text-[#0B2545] leading-none mb-1">{activeClasses}</h2>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">ACTIVE CLASSES</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[2rem] p-6 border border-neutral-200 shadow-sm flex flex-col justify-between h-36 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-bl-full -z-0"></div>
-            <div className="flex justify-between items-start relative z-10">
-              <div className="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              </div>
-              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">BUTUH TINDAKAN</span>
-            </div>
-            <div className="relative z-10">
-              <h2 className="text-3xl font-black text-red-600 leading-none mb-1">15</h2>
-              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">PENDING GRADES</p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-12">
           
           {/* Schedule List */}
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-[#0B2545]">Jadwal Hari Ini</h2>
+              <h2 className="text-xl font-black text-[#0B2545]">Jadwal Terdekat</h2>
               <Link href="/coach/schedule" className="text-sm font-bold text-neutral-600 hover:text-[#0B2545]">Lihat Kalender</Link>
             </div>
             
             <div className="space-y-4 relative before:absolute before:inset-0 before:ml-[60px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-neutral-200">
               
-              {todayEvents.map(ev => {
+              {upcomingEvents.map(ev => {
                 const hour = parseInt(ev.startTime.split(':')[0], 10);
                 const isAm = hour < 12;
                 const isWorkshop = ev.type === 'Workshop';
@@ -148,6 +177,7 @@ export default function CoachDashboardPage() {
                 return (
                   <div key={ev.id} className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm flex items-center gap-6 relative z-10">
                     <div className="w-16 text-center shrink-0">
+                      <div className="text-[10px] font-bold text-neutral-400 mb-1">{ev.date}</div>
                       <div className="text-lg font-black text-[#0B2545]">{ev.startTime}</div>
                       <div className="text-[10px] font-bold text-neutral-400 uppercase">{isAm ? 'PAGI' : 'SIANG'}</div>
                     </div>
@@ -170,59 +200,63 @@ export default function CoachDashboardPage() {
                 );
               })}
 
-              {todayEvents.length === 0 && (
+              {upcomingEvents.length === 0 && (
                 <div className="bg-white rounded-2xl p-6 border border-neutral-200 shadow-sm relative z-10 text-center">
-                  <p className="text-sm text-neutral-500 py-4">Tidak ada jadwal untuk hari ini.</p>
+                  <p className="text-sm text-neutral-500 py-4">Tidak ada jadwal terdekat (3 hari ke depan).</p>
                 </div>
               )}
 
             </div>
           </div>
 
-          {/* Pending Tasks */}
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-[#0B2545]">Tugas Tertunda</h2>
-              <span className="bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">15 Urgent</span>
-            </div>
-            
-            <div className="space-y-4">
-              {/* Task 1 */}
-              <div className="bg-[#FFF8F3] border border-[#F4E3D7] rounded-2xl p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#0B2545] text-sm mb-1">Grade Leadership Assessment</h4>
-                    <p className="text-xs text-neutral-500">Submitted by 12 Students &bull; Due Today</p>
-                  </div>
-                </div>
-                <button className="bg-[#964B13] hover:bg-[#72360B] text-white px-5 py-2 rounded-full text-xs font-bold transition-colors shadow-sm">
-                  Review
-                </button>
-              </div>
-
-              {/* Task 2 */}
-              <div className="bg-white border border-neutral-200 rounded-2xl p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#0B2545] text-sm mb-1">Student Feedback Needed</h4>
-                    <p className="text-xs text-neutral-500">Mentoring Session #42 - Ani S.</p>
-                  </div>
-                </div>
-                <button className="border-2 border-[#0B2545] text-[#0B2545] hover:bg-neutral-50 px-5 py-1.5 rounded-full text-xs font-bold transition-colors">
-                  Reply
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
+
+      {/* Report Modal (Hidden for now) */}
+      {/* {isReportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
+            <div className="bg-[#0B2545] p-6 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-black">Laporan Mingguan</h2>
+                <p className="text-xs text-neutral-300">Ringkasan kinerja Anda minggu ini</p>
+              </div>
+              <button 
+                onClick={() => setIsReportModalOpen(false)}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="flex justify-between items-center border-b border-neutral-100 pb-4">
+                <span className="text-sm font-bold text-neutral-600">Total Sesi Selesai</span>
+                <span className="text-lg font-black text-[#0B2545]">12 Sesi</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-neutral-100 pb-4">
+                <span className="text-sm font-bold text-neutral-600">Tugas Dinilai</span>
+                <span className="text-lg font-black text-[#0B2545]">45 Tugas</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-neutral-100 pb-4">
+                <span className="text-sm font-bold text-neutral-600">Rata-rata Rating</span>
+                <span className="text-lg font-black text-[#D47225]">4.9 / 5.0</span>
+              </div>
+              
+              <button 
+                onClick={() => {
+                  alert('Fitur download laporan sedang dalam pengembangan.');
+                  setIsReportModalOpen(false);
+                }}
+                className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white py-3 rounded-full font-bold text-sm uppercase tracking-wide transition-colors mt-4"
+              >
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )} */}
+
     </div>
   );
 }
