@@ -41,8 +41,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create program (admin)
-router.post('/', authenticate, authorize('admin'), async (req, res) => {
+// Create program (admin or superadmin)
+router.post('/', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     let { title, description, category, duration, price, thumbnail } = req.body;
     if (!title) {
@@ -124,7 +124,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // Delete program (admin only)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     const program = await Program.findByPk(req.params.id);
     if (!program) {
