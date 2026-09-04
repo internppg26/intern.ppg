@@ -95,7 +95,7 @@ export default function CourseDetailPage() {
     id: number, 
     title: string, 
     isExpanded: boolean, 
-    subChapters: string[]
+    subChapters: any[]
   }[]>([]);
 
   // History for Undo/Redo
