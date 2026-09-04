@@ -21,6 +21,24 @@ export default function AdminUserManagementPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [currentUser, setCurrentUser] = useState({ name: 'User', role: 'SYSTEM AUTHORITY', initials: 'U' });
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setCurrentUser({
+          name: user.name || 'User',
+          role: user.role || 'SYSTEM AUTHORITY',
+          initials: (user.name || 'U').substring(0, 2).toUpperCase()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -204,14 +222,14 @@ export default function AdminUserManagementPage() {
           <div className="flex items-center gap-4 ml-8 border-l border-neutral-200 pl-8">
             <div className="text-right">
               <div className="text-xs font-bold text-[#0B2545]">
-                {typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user') || '{}').name || 'User'}
+                {currentUser.name}
               </div>
               <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-0.5">
-                {typeof window !== 'undefined' && JSON.parse(localStorage.getItem('user') || '{}').role || 'SYSTEM AUTHORITY'}
+                {currentUser.role}
               </div>
             </div>
             <div className="w-10 h-10 rounded-full bg-[#FCE5D3] flex items-center justify-center text-sm font-bold text-[#E5832E]">
-              {typeof window !== 'undefined' && (JSON.parse(localStorage.getItem('user') || '{}').name || 'U').substring(0, 2).toUpperCase()}
+              {currentUser.initials}
             </div>
           </div>
         </div>
