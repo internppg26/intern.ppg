@@ -96,7 +96,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // Delete enrollment (admin)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
+router.delete('/:id', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     const enrollment = await Enrollment.findByPk(req.params.id);
     if (!enrollment) {
@@ -111,7 +111,7 @@ router.delete('/:id', authenticate, authorize('admin'), async (req, res) => {
 });
 
 // Verify payment (admin)
-router.put('/:id/verify', authenticate, authorize('admin'), async (req, res) => {
+router.put('/:id/verify', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     const enrollment = await Enrollment.findByPk(req.params.id);
     if (!enrollment) {

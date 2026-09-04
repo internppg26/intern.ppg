@@ -24,6 +24,7 @@ function CourseDetailContent() {
   const [instructorName, setInstructorName] = useState('');
   const [instructorRole, setInstructorRole] = useState('');
   const [instructorImage, setInstructorImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!params?.courseId) return;
@@ -251,15 +252,23 @@ function CourseDetailContent() {
   };
 
   // Handle Image Upload Simulation
-  const handleImageUpload = () => {
-    const prompt = window.confirm("Simulasi: Upload foto profil instruktur? (Klik OK untuk menggunakan foto dummy)");
-    if (prompt) {
-      setInstructorImage('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150');
-      commitHistory();
-    }
-  };
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setInstructorImage(reader.result as string);
+          commitHistory();
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    const handleTriggerUpload = () => {
+      fileInputRef.current?.click();
+    };
 
-  return (
+    return (
     <div className="flex flex-col flex-1 h-full overflow-hidden bg-white">
       {/* Top Bar */}
       <div className="bg-white px-8 py-4 flex items-center justify-between shrink-0 shadow-sm z-20">
@@ -541,8 +550,9 @@ function CourseDetailContent() {
                 INSTRUKTUR
               </p>
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={handleImageUpload}
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                  <button 
+                  onClick={handleTriggerUpload}
                   className="w-14 h-14 rounded-xl overflow-hidden bg-[#F4E3D7] hover:bg-[#EBD1BF] transition-colors flex items-center justify-center shrink-0 border border-transparent hover:border-[#D47225] relative group"
                   title="Upload Foto"
                 >
