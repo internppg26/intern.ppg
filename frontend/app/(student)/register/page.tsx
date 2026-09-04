@@ -151,7 +151,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Name</label>
             <input
               type="text"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Alex Morgan"
@@ -163,7 +163,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Username</label>
             <input
               type="text"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="alexmorgan99_"
@@ -175,7 +175,7 @@ export default function RegisterPage() {
             <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Email Address</label>
             <input
               type="email"
-              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+              className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@gmail.com"
@@ -188,7 +188,7 @@ export default function RegisterPage() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
@@ -269,7 +269,7 @@ export default function RegisterPage() {
               <label className="block text-xs font-bold text-neutral-600 mb-1.5 uppercase tracking-wide">Username</label>
               <input
                 type="text"
-                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
+                className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded text-sm text-neutral-900 focus:outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark"
                 value={googleUsername}
                 onChange={(e) => setGoogleUsername(e.target.value)}
                 placeholder="ex: johndoe123"

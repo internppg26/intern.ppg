@@ -4,29 +4,128 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function CertificatesPage() {
-  const certificates = [
-    {
-      id: 1,
-      title: "Corporate Strategy Masterclass",
-      issued: "25 Oct 2023",
-      certId: "PPG-CERT-9981",
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070"
-    },
-    {
-      id: 2,
-      title: "Financial Analysis for Managers",
-      issued: "12 Sep 2023",
-      certId: "PPG-CERT-8820",
-      image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=2036"
-    },
-    {
-      id: 3,
-      title: "Human Resource Leadership",
-      issued: "05 Aug 2023",
-      certId: "PPG-CERT-7734",
-      image: null
+  const [certificates, setCertificates] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [userName, setUserName] = React.useState('User');
+
+  React.useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setUserName(user.name || 'User');
+      } catch (e) {}
     }
-  ];
+
+    fetch('/api/enrollments', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        const completed = data.filter(e => e.status === 'completed' || e.isCompleted === true);
+        const certs = completed.map((enr) => {
+           const course = enr.Program;
+           if (!course) return null;
+           return {
+             id: enr.id,
+             title: course.title,
+             issued: new Date(enr.completedAt || enr.updatedAt || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+             certId: `PPG-CERT-${enr.id.toString().padStart(4, '0')}`,
+             image: course.thumbnail && course.thumbnail !== '/Logo_Performa_Puncak.png' ? course.thumbnail : 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070',
+           };
+        }).filter(Boolean);
+        setCertificates(certs);
+      }
+      setLoading(false);
+    })
+    .catch(() => setLoading(false));
+  }, []);
+
+  const handlePrint = (cert: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Certificate - ${cert.title}</title>
+            <style>
+              body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff; }
+              @page { size: A4 landscape; margin: 0; }
+              .cert-container { 
+                width: 100%; height: 100vh; position: relative; overflow: hidden;
+                display: flex; flex-direction: column; justify-content: center; padding-left: 100px; box-sizing: border-box;
+              }
+              .decor-left { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: #0B2545; }
+              .decor-top-left { position: absolute; left: 60px; top: 0; width: 200px; height: 150px; background: #D47225; border-bottom-right-radius: 100%; }
+              .decor-bottom-right { position: absolute; right: 0; bottom: 0; width: 300px; height: 300px; background: #F4E3D7; border-top-left-radius: 100%; z-index: -1; }
+              .content { max-width: 800px; z-index: 10; position: relative; }
+              .header { font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: #D47225; font-weight: bold; margin-bottom: 20px; }
+              h1 { font-size: 42px; color: #0B2545; margin: 0 0 40px 0; font-weight: 900; }
+              .awarded-to { font-size: 16px; color: #666; margin-bottom: 10px; }
+              .name { font-size: 36px; font-weight: bold; color: #0B2545; border-bottom: 3px solid #D47225; display: inline-block; padding-bottom: 10px; margin-bottom: 30px; text-transform: uppercase; }
+              .desc { font-size: 18px; color: #555; max-width: 600px; line-height: 1.6; margin-bottom: 50px; }
+              .course-title { font-weight: bold; color: #0B2545; }
+              .footer { display: flex; justify-content: space-between; align-items: flex-end; max-width: 750px; }
+              .signature { border-top: 1px solid #000; padding-top: 10px; width: 200px; text-align: center; }
+              .signature p { margin: 0; font-size: 14px; font-weight: bold; }
+              .signature span { font-size: 12px; color: #666; }
+              .meta { text-align: right; }
+              .meta p { margin: 5px 0; font-size: 14px; color: #555; }
+              .meta strong { color: #0B2545; }
+            </style>
+          </head>
+          <body>
+            <div class="cert-container">
+              <div class="decor-left"></div>
+              <div class="decor-top-left"></div>
+              <div class="decor-bottom-right"></div>
+              
+              <div class="content">
+                <div class="header">Certificate of Completion</div>
+                <h1>${cert.title}</h1>
+                <div class="awarded-to">This certificate is proudly presented to</div>
+                <div class="name">${userName}</div>
+                <div class="desc">
+                  Has been awarded a certificate of completion for the <span class="course-title">${cert.title}</span> course, demonstrating a commitment to continuous learning and professional development.
+                </div>
+                
+                <div class="footer">
+                  <div class="signature">
+                    <div style="font-family: 'Brush Script MT', cursive; font-size: 32px; color: #0B2545; padding-bottom: 10px;">M. Rizqi</div>
+                    <p>M. Rizqi Fahruddien</p>
+                    <span>CEO, Performa Puncak Group</span>
+                  </div>
+                  
+                  <div class="meta">
+                    <p>Issued on: <strong>${cert.issued}</strong></p>
+                    <p>Certificate ID: <strong>${cert.certId}</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+            <script>
+              setTimeout(() => {
+                const element = document.querySelector('.cert-container');
+                const opt = {
+                  margin:       0,
+                  filename:     'Certificate_${cert.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf',
+                  image:        { type: 'jpeg', quality: 1 },
+                  html2canvas:  { scale: 2, useCORS: true },
+                  jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+                };
+                html2pdf().set(opt).from(element).save().then(() => {
+                  setTimeout(() => window.close(), 500);
+                });
+              }, 1000);
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -52,7 +151,9 @@ export default function CertificatesPage() {
 
         {/* Certificate Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {certificates.map((cert) => (
+          {loading ? (
+            <div className="col-span-2 text-center py-10">Memuat sertifikat...</div>
+          ) : certificates.map((cert) => (
             <div key={cert.id} className="bg-white border border-neutral-200 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col">
               
               {/* Image Preview Area */}
@@ -102,7 +203,7 @@ export default function CertificatesPage() {
                 </div>
 
                 <div className="flex gap-4 mt-auto">
-                  <button className="flex-1 bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full font-bold text-sm transition-colors shadow-md shadow-[#D47225]/20">
+                  <button onClick={() => handlePrint(cert)} className="flex-1 bg-[#D47225] hover:bg-[#B55D1A] text-white py-3 rounded-full font-bold text-sm transition-colors shadow-md shadow-[#D47225]/20">
                     Unduh PDF
                   </button>
                   <button className="flex-1 border-2 border-neutral-300 text-neutral-600 hover:border-[#0B2545] hover:text-[#0B2545] py-3 rounded-full font-bold text-sm transition-colors flex items-center justify-center gap-2">
