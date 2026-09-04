@@ -2,11 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 export default function PaymentPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bank = searchParams.get('bank') || 'BRI';
+  const bankDetails = bank === 'MANDIRI' 
+    ? { name: 'Bank Mandiri', no: '141 00 1234567 8', code: 'mandiri', color: 'text-[#F2A900]' }
+    : { name: 'Bank BRI', no: '1234 01 005678 50 1', code: 'BRI', color: 'text-[#00529C]' };
+
   const [courseTitle, setCourseTitle] = useState('Loading...');
   const [courseProgramName, setCourseProgramName] = useState('PROGRAM');
   const [price, setPrice] = useState('');
@@ -110,9 +116,9 @@ export default function PaymentPage() {
             <p className="text-sm text-neutral-600 mb-3">Transfer ke rekening berikut:</p>
             <div className="bg-[#F8F9FA] rounded-2xl p-6 border border-neutral-200 flex justify-between items-center">
               <div>
-                <h3 className="font-bold text-[#0B2545] text-sm mb-1">Bank BCA</h3>
+                <h3 className="font-bold text-[#0B2545] text-sm mb-1">{bankDetails.name}</h3>
                 <div className="flex items-center gap-3 mb-1">
-                  <span className="text-2xl font-black text-[#0B2545] tracking-widest">1234 567 890</span>
+                  <span className="text-2xl font-black text-[#0B2545] tracking-widest">{bankDetails.no}</span>
                   <button className="text-neutral-400 hover:text-[#0B2545]">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   </button>
@@ -120,7 +126,7 @@ export default function PaymentPage() {
                 <p className="text-xs text-neutral-500">a.n PT. Performa Puncak Group</p>
               </div>
               <div className="w-12 h-6 bg-white border border-neutral-200 rounded flex items-center justify-center">
-                <span className="text-[#0066AE] font-black italic text-[8px]">BCA</span>
+                <span className={`${bankDetails.color} font-black italic text-[8px]`}>{bankDetails.code}</span>
               </div>
             </div>
           </div>

@@ -10,6 +10,7 @@ export default function CourseDetailPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [courseTitle, setCourseTitle] = useState('Loading...');
   const [courseProgramName, setCourseProgramName] = useState('PROGRAM');
+  const [courseBidangName, setCourseBidangName] = useState('BIDANG');
   const [videoCount, setVideoCount] = useState(0);
   const [pdfCount, setPdfCount] = useState(0);
   
@@ -22,8 +23,10 @@ export default function CourseDetailPage() {
       setCourseTitle(data.title);
       setIsOpen(data.isPublished);
       if (data.category) {
-        let progName = data.category.split('||')[0].replace(/ Program/gi, '');
+        const parts = data.category.split('||');
+        let progName = parts[0].replace(/ Program/gi, '').trim();
         setCourseProgramName(progName);
+        if (parts.length > 1) setCourseBidangName(parts[1].trim());
       }
       if (data.description) {
         try {
@@ -294,10 +297,10 @@ export default function CourseDetailPage() {
             
             <div className="flex flex-wrap gap-2 mb-6">
               <span className="bg-[#964B13] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
-                PENJUALAN DAN PEMASARAN (SALES AND MARKETING TRAINING)
+                {courseBidangName.toUpperCase()}
               </span>
               <span className="bg-[#EAF1F8] text-[#0B2545] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest">
-                CORPORATE
+                {courseProgramName.toUpperCase()}
               </span>
             </div>
 
