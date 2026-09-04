@@ -23,7 +23,7 @@ export default function AboutPage() {
             {/* Founder Card */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-6 max-w-md w-full">
               <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-neutral-200">
-                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop" alt="Founder" className="w-full h-full object-cover" />
+                <img src="/foto_pak_ilham.jpg" alt="Founder" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-brand-dark">FOUNDER</h3>
@@ -37,7 +37,7 @@ export default function AboutPage() {
             {/* Manager Card */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center gap-6 max-w-md w-full">
               <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-neutral-200">
-                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop" alt="Manager" className="w-full h-full object-cover" />
+                <img src="/foto_pak_hadi.png" alt="Manager" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-brand-dark">MANAGER</h3>
