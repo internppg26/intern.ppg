@@ -454,14 +454,14 @@ export default function AdminCourseMaterialPage() {
                     <div 
                       key={sub.id} 
                       onClick={() => handleSelectSubChapter(ch.id, sub.id)}
-                      className={`border rounded-lg p-3 flex justify-between items-center text-xs cursor-pointer transition-colors group ${!isOverviewActive && sub.isActive ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'bg-white border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
+                      className={`border rounded-lg p-3 flex justify-between items-center text-xs cursor-pointer transition-colors group ${(!isOverviewActive && sub.isActive) ? 'bg-[#0B2545] text-white border-[#0B2545]' : 'bg-white border-neutral-200 text-[#0B2545] hover:bg-neutral-50'}`}
                     >
                       <input
                         type="text"
                         value={sub.title}
                         onChange={(e) => handleEditSidebarSubBabTitle(ch.id, sub.id, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        className={`font-bold w-full bg-transparent focus:outline-none ${sub.isActive ? 'text-white' : 'text-[#0B2545]'}`}
+                        className={`font-bold w-full bg-transparent focus:outline-none ${(!isOverviewActive && sub.isActive) ? 'text-white' : 'text-[#0B2545]'}`}
                       />
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={sub.isActive ? 'text-white/70' : 'text-neutral-500'}>{sub.duration} min</span>
