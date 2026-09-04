@@ -10,6 +10,7 @@ export default function CheckoutPage() {
   const [courseProgramName, setCourseProgramName] = useState('PROGRAM');
   const [price, setPrice] = useState('');
   const [instructorName, setInstructorName] = useState('');
+  const [selectedBank, setSelectedBank] = useState('BRI');
 
   useEffect(() => {
     fetch(`/api/programs/${params?.id}`, {
@@ -95,28 +96,24 @@ export default function CheckoutPage() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* BCA */}
-                <div className="border-2 border-[#D47225] bg-[#FFF8F3] rounded-2xl p-6 relative cursor-pointer">
+                {/* BRI */}
+                <div onClick={() => setSelectedBank('BRI')} className={`border-2 ${selectedBank === 'BRI' ? 'border-[#D47225] bg-[#FFF8F3]' : 'border-neutral-200 bg-white hover:border-[#D47225]'} rounded-2xl p-6 relative cursor-pointer transition-colors`}>
                   <div className="w-16 h-8 bg-white border border-neutral-200 rounded flex items-center justify-center mb-4">
-                    {/* Placeholder for BCA logo, using text */}
-                    <span className="text-[#0066AE] font-black italic text-xs">BCA</span>
+                    <span className="text-[#00529C] font-black italic text-xs">BRI</span>
                   </div>
-                  <h4 className="font-bold text-[#0B2545] text-sm mb-1">Transfer Bank BCA</h4>
-                  <p className="text-xs text-neutral-500">Konfirmasi otomatis (1-10 menit)</p>
+                  <h4 className="font-bold text-[#0B2545] text-sm mb-1">Transfer Bank BRI</h4>
                   
-                  <div className="absolute top-6 right-6 w-5 h-5 rounded-full border-4 border-[#D47225] bg-[#D47225]"></div>
+                  <div className={`absolute top-6 right-6 w-5 h-5 rounded-full border-2 ${selectedBank === 'BRI' ? 'border-[#D47225] border-t-4 bg-[#D47225]' : 'border-neutral-300 bg-white'}`}></div>
                 </div>
 
                 {/* Mandiri */}
-                <div className="border border-neutral-200 bg-white rounded-2xl p-6 relative cursor-pointer hover:border-[#D47225] transition-colors">
+                <div onClick={() => setSelectedBank('MANDIRI')} className={`border-2 ${selectedBank === 'MANDIRI' ? 'border-[#D47225] bg-[#FFF8F3]' : 'border-neutral-200 bg-white hover:border-[#D47225]'} rounded-2xl p-6 relative cursor-pointer transition-colors`}>
                   <div className="w-16 h-8 bg-white border border-neutral-200 rounded flex items-center justify-center mb-4">
-                    {/* Placeholder for Mandiri logo */}
                     <span className="text-[#F2A900] font-black italic text-xs">mandiri</span>
                   </div>
                   <h4 className="font-bold text-[#0B2545] text-sm mb-1">Transfer Bank Mandiri</h4>
-                  <p className="text-xs text-neutral-500">Konfirmasi manual (s/d 2 jam)</p>
                   
-                  <div className="absolute top-6 right-6 w-5 h-5 rounded-full border-2 border-neutral-300 bg-white"></div>
+                  <div className={`absolute top-6 right-6 w-5 h-5 rounded-full border-2 ${selectedBank === 'MANDIRI' ? 'border-[#D47225] border-t-4 bg-[#D47225]' : 'border-neutral-300 bg-white'}`}></div>
                 </div>
               </div>
             </div>
@@ -146,7 +143,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <Link href={`/dashboard/payment/${params?.id}`} className="block w-full bg-[#B55D1A] hover:bg-[#964B13] text-white text-center py-4 rounded-xl font-bold text-sm tracking-wider flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#B55D1A]/30">
+              <Link href={`/dashboard/payment/${params?.id}?bank=${selectedBank}`} className="block w-full bg-[#B55D1A] hover:bg-[#964B13] text-white text-center py-4 rounded-xl font-bold text-sm tracking-wider flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#B55D1A]/30">
                 Lanjutkan Pembayaran
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </Link>
