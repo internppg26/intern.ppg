@@ -59,9 +59,13 @@ export default function CoachLayout({
         {/* User Profile */}
         <div className="px-6 py-4 mb-4">
           <div className="bg-[#13325B] border border-white/10 rounded-xl p-6 flex flex-col items-center text-center shadow-lg relative overflow-hidden">
-            <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3 text-xl font-bold uppercase">
-              {currentUser?.name?.[0] || currentUser?.username?.[0] || 'C'}
-            </div>
+            {currentUser?.avatar ? (
+              <img src={currentUser.avatar} alt="Profile" className="w-12 h-12 rounded-sm object-cover mb-3 shadow-md" />
+            ) : (
+              <div className="w-12 h-12 bg-[#2D5A8B] rounded-sm flex items-center justify-center mb-3 text-xl font-bold uppercase shadow-md">
+                {currentUser?.name?.[0] || currentUser?.username?.[0] || 'C'}
+              </div>
+            )}
             <h3 className="font-bold text-base capitalize">{currentUser?.name || currentUser?.username || 'Coach'}</h3>
             <p className="text-xs text-white/60">{currentUser?.email || 'coach@ppg.com'}</p>
           </div>

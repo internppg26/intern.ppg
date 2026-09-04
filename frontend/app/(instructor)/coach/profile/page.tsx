@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 export default function InstructorProfilePage() {
@@ -10,15 +10,22 @@ export default function InstructorProfilePage() {
     fullName: 'Prof. Adrian Puncak',
     professionalTitle: 'Senior Business Strategist',
     shortBio: '',
-    linkedinUrl: 'https://linkedin.com/in/adrian-puncak'
+    linkedinUrl: 'https://linkedin.com/in/adrian-puncak',
+    avatar: ''
   });
 
   const [securityData, setSecurityData] = useState({
     email: 'adrian.puncak@performapuncak.com',
-    currentPassword: 'password123',
-    newPassword: 'password123',
-    confirmPassword: 'password123'
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -26,9 +33,27 @@ export default function InstructorProfilePage() {
       try {
         const user = JSON.parse(userStr);
         setCurrentUser(user);
-        if (user.name) {
-          setFormData(prev => ({ ...prev, fullName: user.name }));
+        
+        let initialData = {
+          fullName: user.name || '',
+          professionalTitle: '',
+          shortBio: '',
+          linkedinUrl: '',
+          avatar: user.avatar || ''
+        };
+
+        if (user.instansi) {
+          try {
+            const parsed = JSON.parse(user.instansi);
+            if (parsed.title) initialData.professionalTitle = parsed.title;
+            if (parsed.bio) initialData.shortBio = parsed.bio;
+            if (parsed.linkedin) initialData.linkedinUrl = parsed.linkedin;
+          } catch(e) {
+            // Not JSON
+          }
         }
+
+        setFormData(initialData);
         if (user.email) {
           setSecurityData(prev => ({ ...prev, email: user.email }));
         }
@@ -37,6 +62,90 @@ export default function InstructorProfilePage() {
       }
     }
   }, []);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, avatar: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const instansiData = JSON.stringify({
+        title: formData.professionalTitle,
+        bio: formData.shortBio,
+        linkedin: formData.linkedinUrl
+      });
+
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          instansi: instansiData,
+          avatar: formData.avatar
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('user', JSON.stringify(data.user));
+        alert('Profil berhasil disimpan!');
+      } else {
+        const err = await res.json();
+        alert('Gagal menyimpan profil: ' + (err.error || res.statusText));
+      }
+    } catch (e: any) {
+      alert('Terjadi kesalahan: ' + e.message);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!securityData.currentPassword || !securityData.newPassword) {
+      alert('Password lama dan baru wajib diisi!');
+      return;
+    }
+    if (securityData.newPassword !== securityData.confirmPassword) {
+      alert('Konfirmasi password tidak cocok!');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          currentPassword: securityData.currentPassword,
+          newPassword: securityData.newPassword
+        })
+      });
+
+      if (res.ok) {
+        alert('Password berhasil diperbarui!');
+        setSecurityData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+      } else {
+        const err = await res.json();
+        alert('Gagal memperbarui password: ' + (err.error || res.statusText));
+      }
+    } catch (e: any) {
+      alert('Terjadi kesalahan: ' + e.message);
+    }
+  };
+
+  const handleEnable2FA = () => {
+    alert('Fitur Two-Factor Authentication akan segera hadir.');
+  };
 
   return (
     <div className="flex flex-col min-h-full relative bg-[#F8F9FA]">
@@ -71,10 +180,32 @@ export default function InstructorProfilePage() {
             <h2 className="text-lg font-black text-[#0B2545] mb-6 border-b border-neutral-100 pb-4">Public Profile Information</h2>
             
             <div className="flex flex-col items-center mb-8">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-3 bg-[#E8EDF2] flex items-center justify-center">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2545" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <div 
+                className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-3 bg-[#E8EDF2] flex items-center justify-center cursor-pointer relative group"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {formData.avatar ? (
+                  <>
+                    <img src={formData.avatar} alt="Profile" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-white text-xs font-bold">Ubah</span>
+                    </div>
+                  </>
+                ) : (
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0B2545" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
               </div>
-              <button className="text-[#B87B2E] text-xs font-bold uppercase tracking-widest hover:text-[#8C5D23] transition-colors">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[#B87B2E] text-xs font-bold uppercase tracking-widest hover:text-[#8C5D23] transition-colors"
+              >
                 CHANGE PHOTO
               </button>
             </div>
@@ -128,7 +259,10 @@ export default function InstructorProfilePage() {
               </div>
 
               <div className="pt-2">
-                <button className="w-full bg-[#D87F20] hover:bg-[#B86B19] text-white font-bold py-3.5 rounded-full transition-colors text-sm shadow-md">
+                <button 
+                  onClick={handleSaveProfile}
+                  className="w-full bg-[#D87F20] hover:bg-[#B86B19] text-white font-bold py-3.5 rounded-full transition-colors text-sm shadow-md"
+                >
                   SAVE PROFILE
                 </button>
               </div>
@@ -168,12 +302,21 @@ export default function InstructorProfilePage() {
                     <label className="block text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-1">CURRENT PASSWORD</label>
                     <div className="relative">
                       <input 
-                        type="password" 
+                        type={showCurrentPassword ? "text" : "password"}
                         value={securityData.currentPassword}
                         onChange={(e) => setSecurityData({...securityData, currentPassword: e.target.value})}
-                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors"
+                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors pr-10"
                       />
-                      <svg className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                      <button 
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-1"
+                      >
+                        {showCurrentPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -181,12 +324,21 @@ export default function InstructorProfilePage() {
                     <label className="block text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-1">NEW PASSWORD</label>
                     <div className="relative">
                       <input 
-                        type="password" 
+                        type={showNewPassword ? "text" : "password"}
                         value={securityData.newPassword}
                         onChange={(e) => setSecurityData({...securityData, newPassword: e.target.value})}
-                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors"
+                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors pr-10"
                       />
-                      <svg className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                      <button 
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-1"
+                      >
+                        {showNewPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -194,17 +346,29 @@ export default function InstructorProfilePage() {
                     <label className="block text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-1">CONFIRM NEW PASSWORD</label>
                     <div className="relative">
                       <input 
-                        type="password" 
+                        type={showConfirmPassword ? "text" : "password"}
                         value={securityData.confirmPassword}
                         onChange={(e) => setSecurityData({...securityData, confirmPassword: e.target.value})}
-                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors"
+                        className="w-full bg-[#FFF9F3] border border-transparent focus:border-[#D87F20] rounded-md px-4 py-3 text-sm text-[#0B2545] outline-none transition-colors pr-10"
                       />
-                      <svg className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                      <button 
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 p-1"
+                      >
+                        {showConfirmPassword ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full bg-[#0C2B40] hover:bg-[#133c5a] text-white font-bold py-3.5 rounded-full transition-colors text-sm shadow-md">
+                <button 
+                  onClick={handleUpdatePassword}
+                  className="w-full bg-[#0C2B40] hover:bg-[#133c5a] text-white font-bold py-3.5 rounded-full transition-colors text-sm shadow-md"
+                >
                   UPDATE PASSWORD
                 </button>
               </div>
@@ -215,7 +379,10 @@ export default function InstructorProfilePage() {
                 <h3 className="text-sm font-black text-[#0B2545] mb-1">TWO-FACTOR AUTHENTICATION</h3>
                 <p className="text-xs text-neutral-500">Add an extra layer of security to your account.</p>
               </div>
-              <button className="px-6 py-2 border-2 border-[#0B2545] text-[#0B2545] text-xs font-bold rounded-full hover:bg-[#0B2545] hover:text-white transition-colors shrink-0 uppercase tracking-wide">
+              <button 
+                onClick={handleEnable2FA}
+                className="px-6 py-2 border-2 border-[#0B2545] text-[#0B2545] text-xs font-bold rounded-full hover:bg-[#0B2545] hover:text-white transition-colors shrink-0 uppercase tracking-wide"
+              >
                 ENABLE
               </button>
             </div>
