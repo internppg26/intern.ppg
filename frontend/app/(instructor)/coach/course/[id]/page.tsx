@@ -237,7 +237,9 @@ export default function CourseDetailPage() {
       if (res.ok) {
         alert("Detail Course berhasil disimpan!");
       } else {
-        alert("Gagal menyimpan detail course.");
+        const errText = await res.text();
+        console.error("Save error:", res.status, errText);
+        alert("Gagal menyimpan detail course: " + res.status + " " + errText);
       }
     } catch (e) {
       console.error(e);
