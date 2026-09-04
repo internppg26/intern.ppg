@@ -81,7 +81,7 @@ router.put('/:id', authenticate, async (req, res) => {
     if (!program) {
       return res.status(404).json({ error: 'Program not found' });
     }
-    if (program.instructorId !== req.user.id && req.user.role !== 'admin') {
+    if (program.instructorId !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     let { title, description, category, duration, price, thumbnail, isPublished } = req.body;

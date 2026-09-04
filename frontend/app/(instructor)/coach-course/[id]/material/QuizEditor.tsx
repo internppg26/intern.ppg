@@ -22,13 +22,18 @@ interface Question {
 
 interface QuizEditorProps {
   duration: string;
+  initialQuestions?: Question[];
+  initialIntroDesc?: string;
+  initialInstructions?: string;
+  onSave?: (questions: Question[], introDesc: string, instructions: string) => void;
 }
 
-export default function QuizEditor({ duration }: QuizEditorProps) {
+export default function QuizEditor({ duration, initialQuestions, initialIntroDesc, initialInstructions, onSave }: QuizEditorProps) {
   const [quizMode, setQuizMode] = useState<'intro' | 'question'>('intro');
-  const [quizIntroDesc, setQuizIntroDesc] = useState('');
+  const [quizIntroDesc, setQuizIntroDesc] = useState(initialIntroDesc || '');
+  const [quizInstructions, setQuizInstructions] = useState(initialInstructions || '');
   
-  const [questions, setQuestions] = useState<Question[]>([
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions || [
     {
       id: 1,
       blocks: [{ id: '1', type: 'empty', content: '' }],
@@ -256,7 +261,7 @@ export default function QuizEditor({ duration }: QuizEditorProps) {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                   Petunjuk Pengerjaan:
                 </div>
-                <input type="text" placeholder="cth: Terdapat 10 pertanyaan pilihan ganda." className="w-full bg-transparent focus:outline-none text-sm text-neutral-500 placeholder:text-neutral-400" />
+                <input type="text" value={quizInstructions} onChange={(e) => setQuizInstructions(e.target.value)} placeholder="cth: Terdapat 10 pertanyaan pilihan ganda." className="w-full bg-transparent focus:outline-none text-sm text-neutral-500 placeholder:text-neutral-400" />
               </div>
               <div className="border-t border-neutral-200 pt-6 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-[#F4E3D7] flex items-center justify-center shrink-0">
@@ -270,7 +275,24 @@ export default function QuizEditor({ duration }: QuizEditorProps) {
             </div>
           ) : (
             <div>
-              <div className="text-xs font-bold text-[#0B2545] mb-6">SOAL {activeIndex + 1} DARI {questions.length}</div>
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-xs font-bold text-[#0B2545]">SOAL {activeIndex + 1} DARI {questions.length}</div>
+                {questions.length > 1 && (
+                  <button 
+                    onClick={() => {
+                      const newQuestions = questions.filter((_, idx) => idx !== activeIndex);
+                      setQuestions(newQuestions);
+                      if (activeIndex >= newQuestions.length) {
+                        setActiveIndex(newQuestions.length - 1);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-600 flex items-center gap-1 text-xs font-bold"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    Hapus Soal
+                  </button>
+                )}
+              </div>
               
               {renderBlocks()}
 
@@ -279,17 +301,43 @@ export default function QuizEditor({ duration }: QuizEditorProps) {
                 <h3 className="font-bold text-sm text-[#0B2545] mb-4">Opsi Jawaban</h3>
                 <div className="space-y-3">
                   {questions[activeIndex].options.map((opt, oIdx) => (
-                    <div key={opt.id} className="flex items-center gap-3 border border-neutral-200 rounded-full px-4 py-2 hover:border-[#0B2545] transition-colors">
-                      <button className="text-red-500 hover:text-red-600">
+                    <div key={opt.id} className={`flex items-center gap-3 border ${opt.isCorrect ? 'border-green-500 bg-green-50' : 'border-neutral-200'} rounded-full px-4 py-2 hover:border-[#0B2545] transition-colors`}>
+                      <button 
+                        onClick={() => {
+                          setQuestions(questions.map((q, qIdx) => {
+                            if (qIdx === activeIndex) {
+                              return { ...q, options: q.options.filter(o => o.id !== opt.id) };
+                            }
+                            return q;
+                          }));
+                        }}
+                        className="text-red-500 hover:text-red-600"
+                        title="Hapus opsi"
+                      >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                       </button>
-                      <button className="text-red-500 hover:text-red-600 mr-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                      <button 
+                        onClick={() => {
+                          setQuestions(questions.map((q, qIdx) => {
+                            if (qIdx === activeIndex) {
+                              // If it's single choice, we might want to uncheck others. But let's allow multiple correct answers for flexibility, or just toggle this one.
+                              return {
+                                ...q,
+                                options: q.options.map(o => o.id === opt.id ? { ...o, isCorrect: !o.isCorrect } : { ...o, isCorrect: false }) // Single choice logic
+                              };
+                            }
+                            return q;
+                          }));
+                        }}
+                        className={`${opt.isCorrect ? 'text-green-500' : 'text-neutral-400 hover:text-[#0B2545]'} mr-2`}
+                        title="Tandai sebagai jawaban benar"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill={opt.isCorrect ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="9 12 11 14 15 10" style={{display: opt.isCorrect ? 'none' : 'block'}}></polyline></svg>
                       </button>
                       <input 
                         type="text" 
                         placeholder="Ketik Opsi Jawaban" 
-                        className="flex-1 focus:outline-none text-sm"
+                        className="flex-1 focus:outline-none text-sm bg-transparent"
                         value={opt.text}
                         onChange={(e) => {
                           const newText = e.target.value;
@@ -341,7 +389,14 @@ export default function QuizEditor({ duration }: QuizEditorProps) {
           &lt; SEBELUMNYA
         </button>
         
-        <button className="bg-[#00628B] hover:bg-[#004e6e] text-white px-8 py-3.5 rounded font-bold text-sm transition-colors">
+        <button 
+          onClick={() => {
+            if (onSave) {
+              onSave(questions, quizIntroDesc, quizInstructions);
+            }
+          }}
+          className="bg-[#00628B] hover:bg-[#004e6e] text-white px-8 py-3.5 rounded font-bold text-sm transition-colors"
+        >
           SIMPAN DRAF
         </button>
 

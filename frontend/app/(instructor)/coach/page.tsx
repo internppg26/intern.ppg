@@ -18,6 +18,7 @@ export default function CoachDashboardPage() {
   const [upcomingEvents, setUpcomingEvents] = React.useState<ScheduleEvent[]>([]);
   const [activeClasses, setActiveClasses] = React.useState<number>(0);
   const [pendingGrades, setPendingGrades] = React.useState<number>(0);
+  const [pendingExams, setPendingExams] = React.useState<any[]>([]);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
@@ -69,6 +70,7 @@ export default function CoachDashboardPage() {
           const examData = await examRes.json();
           const pending = examData.filter((ex: any) => ex.score === null || ex.passed === null);
           setPendingGrades(pending.length);
+          setPendingExams(pending);
         }
       } catch (e) {
         console.error("Failed to fetch dashboard data", e);
@@ -103,7 +105,7 @@ export default function CoachDashboardPage() {
               Selamat Datang, {currentUser?.name || 'Coach'}!
             </h1>
             <p className="text-neutral-300 text-sm leading-relaxed mb-8 max-w-md">
-              Anda memiliki {upcomingEvents.length} sesi konsultasi terdekat (3 hari ke depan) dan {pendingGrades} penilaian yang menunggu tinjauan Anda.
+              Anda memiliki {upcomingEvents.length} sesi konsultasi terdekat (3 hari ke depan).
             </p>
             {/* <button 
               onClick={() => setIsReportModalOpen(true)}
@@ -128,7 +130,7 @@ export default function CoachDashboardPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="bg-white rounded-[2rem] p-6 border border-neutral-200 shadow-sm flex flex-col justify-between h-36">
             <div className="flex justify-between items-start">
               <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -154,23 +156,9 @@ export default function CoachDashboardPage() {
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">ACTIVE CLASSES</p>
             </div>
           </div>
-
-          <div className="bg-white rounded-[2rem] p-6 border border-neutral-200 shadow-sm flex flex-col justify-between h-36 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-bl-full -z-0"></div>
-            <div className="flex justify-between items-start relative z-10">
-              <div className="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              </div>
-              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">BUTUH TINDAKAN</span>
-            </div>
-            <div className="relative z-10">
-              <h2 className="text-3xl font-black text-red-600 leading-none mb-1">{pendingGrades}</h2>
-              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">PENDING GRADES</p>
-            </div>
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 mb-12">
           
           {/* Schedule List */}
           <div>
@@ -218,50 +206,6 @@ export default function CoachDashboardPage() {
                 </div>
               )}
 
-            </div>
-          </div>
-
-          {/* Pending Tasks */}
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-black text-[#0B2545]">Tugas Tertunda</h2>
-              {pendingGrades > 0 && (
-                <span className="bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">{pendingGrades} Urgent</span>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              {/* Task 1 */}
-              <div className="bg-[#FFF8F3] border border-[#F4E3D7] rounded-2xl p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#0B2545] text-sm mb-1">Grade Leadership Assessment</h4>
-                    <p className="text-xs text-neutral-500">Submitted by 12 Students &bull; Due Today</p>
-                  </div>
-                </div>
-                <button className="bg-[#964B13] hover:bg-[#72360B] text-white px-5 py-2 rounded-full text-xs font-bold transition-colors shadow-sm">
-                  Review
-                </button>
-              </div>
-
-              {/* Task 2 */}
-              <div className="bg-white border border-neutral-200 rounded-2xl p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#0B2545] text-sm mb-1">Student Feedback Needed</h4>
-                    <p className="text-xs text-neutral-500">Mentoring Session #42 - Ani S.</p>
-                  </div>
-                </div>
-                <button className="border-2 border-[#0B2545] text-[#0B2545] hover:bg-neutral-50 px-5 py-1.5 rounded-full text-xs font-bold transition-colors">
-                  Reply
-                </button>
-              </div>
             </div>
           </div>
 

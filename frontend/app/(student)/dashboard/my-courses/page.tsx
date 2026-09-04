@@ -17,8 +17,6 @@ export default function MyCoursesPage() {
     .then(res => res.json())
     .then(data => {
       if (Array.isArray(data)) {
-        setCourses(data);
-        
         // Hitung statistik
         let computedModuls = 0;
         let computedMins = 0;
@@ -28,11 +26,13 @@ export default function MyCoursesPage() {
             try {
               const subs = JSON.parse(stored);
               const parsedDesc = JSON.parse(enr.Program.description);
+              let totalSubs = 0;
               if (Array.isArray(parsedDesc.chapters)) {
                 parsedDesc.chapters.forEach((ch: any) => {
                   let isBabSelesai = true;
                   let hasSub = false;
                   if (Array.isArray(ch.subChapters)) {
+                    totalSubs += ch.subChapters.length;
                     ch.subChapters.forEach((s: any) => {
                       hasSub = true;
                       if (!subs.includes(s.id?.toString())) isBabSelesai = false;
@@ -44,9 +44,22 @@ export default function MyCoursesPage() {
                   if (hasSub && isBabSelesai) computedModuls++;
                 });
               }
+
+              if (totalSubs > 0) {
+                 const newProgress = Math.round((subs.length / totalSubs) * 100);
+                 enr.progress = newProgress;
+                 if (newProgress < 100) {
+                   enr.status = 'active';
+                   enr.isCompleted = false;
+                 } else {
+                   enr.status = 'completed';
+                   enr.isCompleted = true;
+                 }
+              }
             } catch(e) {}
           }
         });
+        setCourses([...data]);
         setTotalModul(computedModuls);
         setTotalJam(Math.round(computedMins / 60));
         
@@ -144,10 +157,10 @@ export default function MyCoursesPage() {
                   <div className="mb-6">
                     <div className="flex justify-between items-end mb-2 text-[10px] font-bold uppercase tracking-widest">
                       <span className="text-neutral-500">PROGRES</span>
-                      <span className="text-[#0B2545]">{enrollment.progress || 0}%</span>
+                      <span className="text-[#0B2545]">{(() => { const ls = typeof window !== "undefined" ? localStorage.getItem("completed_subs_" + enrollment.id) : null; if (ls && enrollment.program?.description) { try { const parsed = JSON.parse(ls); const desc = JSON.parse(enrollment.program.description); let total = 0; if (desc.chapters) { desc.chapters.forEach((c:any) => { total += c.subChapters?.length || 0 }); } if (total > 0) return Math.round((parsed.length / total) * 100) + "%"; } catch(e) {} } return (enrollment.progress || 0) + "%"; })()}</span>
                     </div>
                     <div className="w-full bg-[#F4E3D7] rounded-full h-2">
-                      <div className="bg-[#D47225] h-2 rounded-full" style={{ width: `${enrollment.progress || 0}%` }}></div>
+                      <div className="bg-[#D47225] h-2 rounded-full" style={{ width: `${(() => { const ls = typeof window !== "undefined" ? localStorage.getItem("completed_subs_" + enrollment.id) : null; if (ls && enrollment.program?.description) { try { const parsed = JSON.parse(ls); const desc = JSON.parse(enrollment.program.description); let total = 0; if (desc.chapters) { desc.chapters.forEach((c:any) => { total += c.subChapters?.length || 0 }); } if (total > 0) return Math.round((parsed.length / total) * 100) + "%"; } catch(e) {} } return (enrollment.progress || 0) + "%"; })()}` }}></div>
                     </div>
                   </div>
                   

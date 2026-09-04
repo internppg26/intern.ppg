@@ -69,6 +69,51 @@ export default function CoachCourseMaterialPage() {
     });
   }, [params?.id]);
 
+  
+  const handleSaveQuiz = async (subId: number, questions: any[], introDesc: string, instructions: string) => {
+    try {
+      // First, update chapters state
+      const updatedChapters = chapters.map(c => ({
+        ...c,
+        subChapters: c.subChapters.map(s => {
+          if (s.id === subId) {
+            return { ...s, quizQuestions: questions, quizIntroDesc: introDesc, quizInstructions: instructions };
+          }
+          return s;
+        })
+      }));
+      setChapters(updatedChapters);
+
+      // Now prepare payload
+      const chaptersToSave = updatedChapters.map(ch => ({
+        id: ch.id,
+        title: ch.title,
+        isExpanded: ch.isOpen,
+        subChapters: ch.subChapters
+      }));
+      const newDescription = { 
+        ...rawDescription, 
+        chapters: chaptersToSave,
+        overviewBlocks: isOverviewActive ? blocks : rawDescription.overviewBlocks 
+      };
+      setRawDescription(newDescription);
+      
+      const payload = { description: JSON.stringify(newDescription) };
+      const res = await fetch(`/api/programs/${params?.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) alert("Kuis berhasil disimpan!");
+      else alert("Gagal menyimpan kuis. Status: " + res.status + " " + await res.text());
+    } catch (e) {
+      alert("Error saving: " + e);
+    }
+  };
+
   const handleSimpan = async () => {
     try {
       // First, sync current blocks into the currently active sub-chapter
@@ -558,7 +603,7 @@ export default function CoachCourseMaterialPage() {
             </div>
             <div className="flex-1 overflow-y-auto w-full flex flex-col px-12 pb-12 items-center">
               <div className="w-full max-w-4xl">
-                <QuizEditor duration={activeSubChapter.duration} />
+                <QuizEditor key={activeSubChapter.id} duration={activeSubChapter.duration} initialQuestions={activeSubChapter.quizQuestions} initialIntroDesc={activeSubChapter.quizIntroDesc} initialInstructions={activeSubChapter.quizInstructions} onSave={(questions, introDesc, instructions) => handleSaveQuiz(activeSubChapter.id, questions, introDesc, instructions)} />
               </div>
             </div>
           </div>
