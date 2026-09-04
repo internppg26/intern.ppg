@@ -21,6 +21,22 @@ export default function AdminProfilePage() {
     if (savedImage) {
       setProfileImage(savedImage);
     }
+
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setFormData(prev => ({
+          ...prev,
+          name: user.name || prev.name,
+          email: user.email || prev.email,
+          username: user.username || prev.username,
+          role: user.role === 'admin' ? 'Super Admin' : (user.role || prev.role)
+        }));
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
+    }
   }, []);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,12 +111,12 @@ export default function AdminProfilePage() {
           <div className="flex flex-col items-start pt-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#E8F0FE] text-[#1A73E8] rounded-full text-xs font-bold mb-2">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              Super Admin
+              {formData.role}
             </div>
             <h3 className="text-2xl font-black text-[#0B2545] mb-1">{formData.name}</h3>
             <div className="flex items-center gap-2 text-neutral-500 text-sm mb-4">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              admin@performapuncak.id
+              {formData.email}
             </div>
             <button 
               onClick={handleButtonClick}
