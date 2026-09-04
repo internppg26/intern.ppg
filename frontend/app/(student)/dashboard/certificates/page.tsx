@@ -27,12 +27,22 @@ export default function CertificatesPage() {
         const certs = completed.map((enr) => {
            const course = enr.Program;
            if (!course) return null;
+           
+           let certificateUrl = '';
+           try {
+             if (course.description) {
+               const parsed = JSON.parse(course.description);
+               certificateUrl = parsed.certificateUrl || '';
+             }
+           } catch (e) {}
+
            return {
              id: enr.id,
              title: course.title,
              issued: new Date(enr.completedAt || enr.updatedAt || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
              certId: `PPG-CERT-${enr.id.toString().padStart(4, '0')}`,
              image: course.thumbnail && course.thumbnail !== '/Logo_Performa_Puncak.png' ? course.thumbnail : 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070',
+             certificateUrl
            };
         }).filter(Boolean);
         setCertificates(certs);
@@ -43,87 +53,10 @@ export default function CertificatesPage() {
   }, []);
 
   const handlePrint = (cert: any) => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Certificate - ${cert.title}</title>
-            <style>
-              body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff; }
-              @page { size: A4 landscape; margin: 0; }
-              .cert-container { 
-                width: 100%; height: 100vh; position: relative; overflow: hidden;
-                display: flex; flex-direction: column; justify-content: center; padding-left: 100px; box-sizing: border-box;
-              }
-              .decor-left { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: #0B2545; }
-              .decor-top-left { position: absolute; left: 60px; top: 0; width: 200px; height: 150px; background: #D47225; border-bottom-right-radius: 100%; }
-              .decor-bottom-right { position: absolute; right: 0; bottom: 0; width: 300px; height: 300px; background: #F4E3D7; border-top-left-radius: 100%; z-index: -1; }
-              .content { max-width: 800px; z-index: 10; position: relative; }
-              .header { font-size: 14px; text-transform: uppercase; letter-spacing: 4px; color: #D47225; font-weight: bold; margin-bottom: 20px; }
-              h1 { font-size: 42px; color: #0B2545; margin: 0 0 40px 0; font-weight: 900; }
-              .awarded-to { font-size: 16px; color: #666; margin-bottom: 10px; }
-              .name { font-size: 36px; font-weight: bold; color: #0B2545; border-bottom: 3px solid #D47225; display: inline-block; padding-bottom: 10px; margin-bottom: 30px; text-transform: uppercase; }
-              .desc { font-size: 18px; color: #555; max-width: 600px; line-height: 1.6; margin-bottom: 50px; }
-              .course-title { font-weight: bold; color: #0B2545; }
-              .footer { display: flex; justify-content: space-between; align-items: flex-end; max-width: 750px; }
-              .signature { border-top: 1px solid #000; padding-top: 10px; width: 200px; text-align: center; }
-              .signature p { margin: 0; font-size: 14px; font-weight: bold; }
-              .signature span { font-size: 12px; color: #666; }
-              .meta { text-align: right; }
-              .meta p { margin: 5px 0; font-size: 14px; color: #555; }
-              .meta strong { color: #0B2545; }
-            </style>
-          </head>
-          <body>
-            <div class="cert-container">
-              <div class="decor-left"></div>
-              <div class="decor-top-left"></div>
-              <div class="decor-bottom-right"></div>
-              
-              <div class="content">
-                <div class="header">Certificate of Completion</div>
-                <h1>${cert.title}</h1>
-                <div class="awarded-to">This certificate is proudly presented to</div>
-                <div class="name">${userName}</div>
-                <div class="desc">
-                  Has been awarded a certificate of completion for the <span class="course-title">${cert.title}</span> course, demonstrating a commitment to continuous learning and professional development.
-                </div>
-                
-                <div class="footer">
-                  <div class="signature">
-                    <div style="font-family: 'Brush Script MT', cursive; font-size: 32px; color: #0B2545; padding-bottom: 10px;">M. Rizqi</div>
-                    <p>M. Rizqi Fahruddien</p>
-                    <span>CEO, Performa Puncak Group</span>
-                  </div>
-                  
-                  <div class="meta">
-                    <p>Issued on: <strong>${cert.issued}</strong></p>
-                    <p>Certificate ID: <strong>${cert.certId}</strong></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-            <script>
-              setTimeout(() => {
-                const element = document.querySelector('.cert-container');
-                const opt = {
-                  margin:       0,
-                  filename:     'Certificate_${cert.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf',
-                  image:        { type: 'jpeg', quality: 1 },
-                  html2canvas:  { scale: 2, useCORS: true },
-                  jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
-                };
-                html2pdf().set(opt).from(element).save().then(() => {
-                  setTimeout(() => window.close(), 500);
-                });
-              }, 1000);
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+    if (cert.certificateUrl) {
+      window.open(cert.certificateUrl, '_blank');
+    } else {
+      alert("Sertifikat untuk pelatihan ini belum diunggah oleh admin/coach. Mohon tunggu atau hubungi mereka.");
     }
   };
 

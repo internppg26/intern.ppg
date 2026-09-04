@@ -163,7 +163,7 @@ export default function CoachSchedulePage() {
         closeModal();
       } else {
         const err = await res.json();
-        alert(err.error || 'Failed to save schedule');
+        alert('Server Error: ' + (err.error || err.message || JSON.stringify(err)));
       }
     } catch (error) {
       console.error(error);
