@@ -6,6 +6,9 @@ import Link from 'next/link';
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalJam, setTotalJam] = useState(0);
+  const [totalModul, setTotalModul] = useState(0);
+  const [streakHari, setStreakHari] = useState(1);
 
   useEffect(() => {
     fetch('/api/enrollments', {
@@ -15,6 +18,52 @@ export default function MyCoursesPage() {
     .then(data => {
       if (Array.isArray(data)) {
         setCourses(data);
+        
+        // Hitung statistik
+        let computedModuls = 0;
+        let computedMins = 0;
+        data.forEach(enr => {
+          const stored = localStorage.getItem(`completed_subs_${enr.id}`);
+          if (stored && enr.Program && enr.Program.description) {
+            try {
+              const subs = JSON.parse(stored);
+              const parsedDesc = JSON.parse(enr.Program.description);
+              if (Array.isArray(parsedDesc.chapters)) {
+                parsedDesc.chapters.forEach((ch: any) => {
+                  let isBabSelesai = true;
+                  let hasSub = false;
+                  if (Array.isArray(ch.subChapters)) {
+                    ch.subChapters.forEach((s: any) => {
+                      hasSub = true;
+                      if (!subs.includes(s.id?.toString())) isBabSelesai = false;
+                      if (subs.includes(s.id?.toString())) {
+                        computedMins += parseInt(s.duration || '10');
+                      }
+                    });
+                  }
+                  if (hasSub && isBabSelesai) computedModuls++;
+                });
+              }
+            } catch(e) {}
+          }
+        });
+        setTotalModul(computedModuls);
+        setTotalJam(Math.round(computedMins / 60));
+        
+        // Dummy streak logic (simulated)
+        const lastLogin = localStorage.getItem('last_login_date');
+        const today = new Date().toDateString();
+        let currentStreak = parseInt(localStorage.getItem('streak_hari') || '1');
+        if (lastLogin !== today) {
+          if (lastLogin === new Date(Date.now() - 86400000).toDateString()) {
+             currentStreak++;
+          } else if (lastLogin) {
+             currentStreak = 1;
+          }
+          localStorage.setItem('last_login_date', today);
+          localStorage.setItem('streak_hari', currentStreak.toString());
+        }
+        setStreakHari(currentStreak);
       }
       setLoading(false);
     })
@@ -23,8 +72,8 @@ export default function MyCoursesPage() {
 
   const [activeTab, setActiveTab] = useState('Sedang Berjalan');
 
-  const ongoingCourses = courses.filter(c => c.status === 'Sedang Berjalan');
-  const completedCourses = courses.filter(c => c.status === 'Selesai');
+  const ongoingCourses = courses.filter(c => c.status !== 'completed' && !c.isCompleted);
+  const completedCourses = courses.filter(c => c.status === 'completed' || c.isCompleted);
 
   const displayedCourses = activeTab === 'Sedang Berjalan' ? ongoingCourses : completedCourses;
 
@@ -76,11 +125,14 @@ export default function MyCoursesPage() {
             const category = course.category ? course.category.split('||')[0].replace(/ Program/gi, '') : 'PROGRAM';
             const isVerified = enrollment.paymentStatus === 'verified';
             const isPending = enrollment.paymentStatus === 'pending';
+            const imgUrl = course.thumbnail && course.thumbnail !== '/Logo_Performa_Puncak.png' 
+                 ? course.thumbnail 
+                 : 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=2000';
             
             return (
               <div key={enrollment.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-200 hover:shadow-lg transition-shadow flex flex-col p-4">
                 <div className="relative aspect-video rounded-xl overflow-hidden mb-6 bg-neutral-100">
-                  <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=2070" alt={course.title} className="w-full h-full object-cover mix-blend-multiply" />
+                  <img src={imgUrl} alt={course.title} className="w-full h-full object-cover mix-blend-multiply" />
                   <div className="absolute top-3 right-3 flex gap-2">
                     <span className="bg-[#0B2545] text-white text-[10px] font-bold px-3 py-1 rounded uppercase tracking-widest shadow-sm">
                       {category.toUpperCase()}
@@ -120,19 +172,19 @@ export default function MyCoursesPage() {
         </div>
 
         {/* Bottom Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <div className="bg-gradient-to-br from-[#0B2545] to-[#13325B] rounded-2xl p-8 text-white md:col-span-1 shadow-lg relative overflow-hidden">
             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[#D47225]/20 rounded-full blur-2xl"></div>
-            <h4 className="text-[10px] font-bold text-[#D47225] uppercase tracking-widest mb-2 relative z-10">AKTIVITAS MINGGU INI</h4>
-            <p className="text-sm text-white/80 mb-6 relative z-10">Kamu telah belajar selama 12 jam.</p>
+            <h4 className="text-[10px] font-bold text-[#D47225] uppercase tracking-widest mb-2 relative z-10">AKTIVITAS KESELURUHAN</h4>
+            <p className="text-sm text-white/80 mb-6 relative z-10">Kamu telah belajar selama {totalJam} jam.</p>
             <div className="flex gap-4 relative z-10">
               <div className="bg-white/10 rounded-full w-16 h-16 flex flex-col items-center justify-center border border-white/20">
-                <span className="font-black text-xl leading-none">12</span>
+                <span className="font-black text-xl leading-none">{totalJam}</span>
                 <span className="text-[10px]">Jam</span>
               </div>
               <div className="bg-white/10 rounded-full w-16 h-16 flex flex-col items-center justify-center border border-white/20">
-                <span className="font-black text-xl leading-none">4</span>
+                <span className="font-black text-xl leading-none">{totalModul}</span>
                 <span className="text-[10px]">Modul</span>
               </div>
             </div>
@@ -143,18 +195,8 @@ export default function MyCoursesPage() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2c0 0-4 4-4 9a4 4 0 0 0 8 0c0-5-4-9-4-9z"></path></svg>
             </div>
             <div>
-              <div className="font-black text-3xl text-[#0B2545]">5 Hari</div>
-              <div className="text-sm text-neutral-500">Belajar Beruntun</div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-2xl p-8 flex items-center gap-6 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-[#FFF8F3] flex items-center justify-center text-[#D47225]">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            </div>
-            <div>
-              <div className="font-black text-3xl text-[#0B2545]">850</div>
-              <div className="text-sm text-neutral-500">Poin XP</div>
+              <div className="font-black text-3xl text-[#0B2545]">{streakHari} Hari</div>
+              <div className="text-sm text-neutral-500">Belajar Beruntun (Streak)</div>
             </div>
           </div>
 
