@@ -1,7 +1,7 @@
 'use client';
 
-import { uploadToSupabase } from '../../../../../../utils/supabaseUpload';
 import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { uploadToSupabase } from '../../../../../../utils/supabaseUpload';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 
@@ -170,11 +170,15 @@ function ListCourseContent() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCurrentCourse({ ...currentCourse, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+      try {
+        const url = await uploadToSupabase(file, 'course-thumbnails');
+        if (url) {
+          setCurrentCourse({ ...currentCourse, image: url });
+        }
+      } catch (err) {
+        console.error("Upload failed", err);
+        alert("Gagal mengupload gambar");
+      }
     }
   };
 
