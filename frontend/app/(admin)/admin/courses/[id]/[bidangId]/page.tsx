@@ -171,7 +171,7 @@ function ListCourseContent() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const url = await uploadToSupabase(file, 'course-thumbnails');
+        const url = await uploadToSupabase(file, 'uploads');
         if (url) {
           setCurrentCourse({ ...currentCourse, image: url });
         }
