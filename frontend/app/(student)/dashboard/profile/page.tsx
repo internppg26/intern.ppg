@@ -1,5 +1,6 @@
 'use client';
 
+import { uploadToSupabase } from '../../../../utils/supabaseUpload';
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -135,14 +136,15 @@ export default function ProfilePage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const url = await uploadToSupabase(file, 'uploads', 'general');
+        setAvatarUrl(url);
+      } catch (err: any) {
+        alert('Gagal mengupload file: ' + err.message);
+      }
     }
   };
 

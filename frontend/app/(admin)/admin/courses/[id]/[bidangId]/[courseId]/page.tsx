@@ -1,5 +1,6 @@
 'use client';
 
+import { createClient } from '@supabase/supabase-js';
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useParams } from 'next/navigation';
@@ -252,15 +253,37 @@ function CourseDetailContent() {
   };
 
   // Handle Image Upload Simulation
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setInstructorImage(reader.result as string);
-          commitHistory();
-        };
-        reader.readAsDataURL(file);
+      if (!file) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `instructor-profiles/${fileName}`;
+
+      try {
+        const { error } = await supabase.storage
+          .from('uploads')
+          .upload(filePath, file);
+
+        if (error) {
+          throw error;
+        }
+
+        const { data } = supabase.storage
+          .from('uploads')
+          .getPublicUrl(filePath);
+
+        setInstructorImage(data.publicUrl);
+        commitHistory();
+        alert('Foto berhasil diunggah ke Supabase!');
+      } catch (error: any) {
+        alert('Gagal mengunggah foto: ' + error.message);
       }
     };
     

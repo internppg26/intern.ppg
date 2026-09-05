@@ -1,5 +1,6 @@
 'use client';
 
+import { uploadToSupabase } from '../../../../utils/supabaseUpload';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -139,14 +140,15 @@ function AdminCMSDetailContent() {
     saveToHistory(newBlocks);
   };
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const url = await uploadToSupabase(file, 'uploads', 'general');
+        setCoverImage(url);
+      } catch (err: any) {
+        alert('Gagal mengupload file: ' + err.message);
+      }
     }
   };
 
