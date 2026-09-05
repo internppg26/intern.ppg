@@ -51,10 +51,8 @@ export default function PaymentPage() {
     if (!uploadedFile) return;
     setIsLoading(true);
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(uploadedFile);
-      reader.onload = async () => {
-        const base64Str = reader.result;
+      const url = await uploadToSupabase(uploadedFile, 'uploads');
+      if (url) {
         const res = await fetch('/api/enrollments', {
           method: 'POST',
           headers: {
@@ -63,7 +61,7 @@ export default function PaymentPage() {
           },
           body: JSON.stringify({
             programId: params?.id,
-            paymentProof: base64Str
+            paymentProof: url
           })
         });
         if (res.ok) {
@@ -73,7 +71,10 @@ export default function PaymentPage() {
           alert("Gagal: " + (d.error || "Terjadi kesalahan"));
           setIsLoading(false);
         }
-      };
+      } else {
+        alert("Gagal mengupload bukti");
+        setIsLoading(false);
+      }
     } catch (e) {
       alert("Error: " + e);
       setIsLoading(false);
