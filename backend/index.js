@@ -109,4 +109,11 @@ async function start() {
   }
 }
 
-start().catch(err => console.error('Start failed:', err));
+
+if (require.main === module) {
+  start().catch(err => console.error('Start failed:', err));
+} else {
+  // Required for Vercel
+  db.sequelize.sync({ alter: false }).catch(err => console.error('DB Sync Error:', err));
+}
+module.exports = app;

@@ -1,5 +1,6 @@
 'use client';
 
+import { uploadToSupabase } from '../../../../utils/supabaseUpload';
 import React from 'react';
 import Link from 'next/link';
 
@@ -90,7 +91,7 @@ export default function AdminCMSPage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();

@@ -1,5 +1,6 @@
 'use client';
 
+import { uploadToSupabase } from '../../../../utils/supabaseUpload';
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 
