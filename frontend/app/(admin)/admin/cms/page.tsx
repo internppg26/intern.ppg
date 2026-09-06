@@ -91,14 +91,20 @@ export default function AdminCMSPage() {
     }
   };
 
+  const [isUploading, setIsUploading] = React.useState(false);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setModalData({...modalData, image: reader.result as string});
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsUploading(true);
+        const url = await uploadToSupabase(file, 'uploads');
+        setModalData({...modalData, image: url});
+      } catch (err) {
+        alert('Gagal mengupload gambar ke Supabase');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -608,9 +614,10 @@ export default function AdminCMSPage() {
                       alert(editId ? 'Gagal mengedit berita' : 'Gagal menambah berita');
                     }
                   }}
-                  className="w-full bg-[#0B2545] hover:bg-[#13325B] text-white text-xs font-bold py-2.5 rounded-md transition-colors"
+                  className={`w-full text-white text-xs font-bold py-2.5 rounded-md transition-colors ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#0B2545] hover:bg-[#13325B]'}`}
+                  disabled={isUploading}
                 >
-                  Simpan
+                  {isUploading ? 'Mengupload Gambar...' : 'Simpan'}
                 </button>
                 <button 
                   onClick={() => setIsModalOpen(false)}
