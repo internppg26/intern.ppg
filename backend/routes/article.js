@@ -41,12 +41,19 @@ router.post('/', async (req, res) => {
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content required' });
     }
+    
+    // Find a valid user to satisfy the foreign key constraint
+    const defaultAuthor = await User.findOne({ order: [['id', 'ASC']] });
+    if (!defaultAuthor) {
+      return res.status(500).json({ error: 'No users found in database to act as author' });
+    }
+
     const article = await Article.create({
       title,
       content,
       thumbnail,
       category,
-      authorId: 1 // Default author ID since auth is temporarily removed
+      authorId: defaultAuthor.id
     });
     res.status(201).json(article);
   } catch (error) {
