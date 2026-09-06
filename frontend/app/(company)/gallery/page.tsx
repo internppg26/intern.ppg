@@ -3,18 +3,18 @@ import React, { useState } from 'react';
 
 const galleryData = [
   { id: 1, src: '/gallery-1.jpg', alt: 'Training Session', className: 'md:col-span-2 md:row-span-2', category: 'In-House Training' },
-  { id: 2, src: '/gallery-2.jpg', alt: 'Outbound Activity', className: 'md:col-span-1 md:row-span-1', category: 'Outbound' },
-  { id: 3, src: '/gallery-3.jpg', alt: 'Smart Service Seminar', className: 'md:col-span-1 md:row-span-1', category: 'Public Seminars' },
+  { id: 2, src: '/gallery-2.JPG', alt: 'Outbound Activity', className: 'md:col-span-1 md:row-span-1', category: 'Outbound' },
+  { id: 3, src: '/gallery-3.JPG', alt: 'Smart Service Seminar', className: 'md:col-span-1 md:row-span-1', category: 'Public Seminars' },
   { id: 4, src: '/gallery-4.jpg', alt: 'Group Thumbs Up', className: 'md:col-span-2 md:row-span-1', category: 'Corporate Events' },
-  { id: 5, src: '/gallery-5.jpg', alt: 'Speaker Session', className: 'md:col-span-2 md:row-span-2', category: 'Public Seminars' },
-  { id: 6, src: '/gallery-6.jpg', alt: 'Projector Presentation', className: 'md:col-span-1 md:row-span-1', category: 'In-House Training' },
-  { id: 7, src: '/gallery-7.jpg', alt: 'Award Winners', className: 'md:col-span-1 md:row-span-1', category: 'Corporate Events' },
-  { id: 8, src: '/gallery-8.jpg', alt: 'Ice Breaking', className: 'md:col-span-2 md:row-span-1', category: 'Outbound' },
-  { id: 9, src: '/gallery-9.jpg', alt: 'Stretching Activity', className: 'md:col-span-4 md:row-span-2', category: 'Outbound' },
+  { id: 5, src: '/gallery-5.JPG', alt: 'Speaker Session', className: 'md:col-span-2 md:row-span-2', category: 'Public Seminars' },
+  { id: 6, src: '/gallery-6.JPG', alt: 'Projector Presentation', className: 'md:col-span-1 md:row-span-1', category: 'In-House Training' },
+  { id: 7, src: '/gallery-7.JPG', alt: 'Award Winners', className: 'md:col-span-1 md:row-span-1', category: 'Corporate Events' },
+  { id: 8, src: '/gallery-8.JPG', alt: 'Ice Breaking', className: 'md:col-span-2 md:row-span-1', category: 'Outbound' },
+  { id: 9, src: '/gallery-9.JPG', alt: 'Stretching Activity', className: 'md:col-span-4 md:row-span-2', category: 'Outbound' },
   { id: 10, src: '/gallery-10.jpg', alt: 'Audience Listening', className: 'md:col-span-1 md:row-span-1', category: 'Public Seminars' },
   { id: 11, src: '/gallery-11.jpg', alt: 'Group Photo Banner', className: 'md:col-span-1 md:row-span-1', category: 'Corporate Events' },
   { id: 12, src: '/gallery-12.jpg', alt: 'Rafting Group', className: 'md:col-span-2 md:row-span-2', category: 'Outbound' },
-  { id: 13, src: '/gallery-13.jpg', alt: 'Outdoor Briefing', className: 'md:col-span-2 md:row-span-1', category: 'Outbound' },
+  { id: 13, src: '/gallery-13.JPG', alt: 'Outdoor Briefing', className: 'md:col-span-2 md:row-span-1', category: 'Outbound' },
 ];
 
 const filters = ['All', 'In-House Training', 'Public Seminars', 'Outbound', 'Corporate Events'];
