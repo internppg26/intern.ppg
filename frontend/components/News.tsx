@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function News() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -50,12 +49,12 @@ export default function News() {
           {articles.map((article, index) => (
             <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
               <Link href={`/blog/${article.id}`}>
-                <div className="relative h-48 w-full cursor-pointer">
-                  <Image
+                <div className="relative h-48 w-full cursor-pointer overflow-hidden">
+                  <img
                     src={article.image}
                     alt={article.title}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/Logo_Performa_Puncak.png'; }}
                   />
                 </div>
               </Link>

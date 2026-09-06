@@ -76,24 +76,24 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
 
   if (!quizStarted) {
     return (
-      <div className="bg-white p-10 lg:p-14 rounded-3xl shadow-sm border border-neutral-200">
-        <h2 className="text-3xl font-black text-[#0B2545] mb-6">Selamat Datang di Sesi {subChapter.title}</h2>
-        <p className="text-neutral-600 mb-10 text-lg leading-relaxed">{introDesc}</p>
+      <div className="bg-white p-5 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-neutral-200">
+        <h2 className="text-2xl sm:text-3xl font-black text-[#0B2545] mb-4 sm:mb-6">Selamat Datang di Sesi {subChapter.title}</h2>
+        <p className="text-neutral-600 mb-6 sm:mb-10 text-base sm:text-lg leading-relaxed">{introDesc}</p>
 
-        <div className="border border-neutral-200 rounded-3xl p-8 bg-neutral-50/50 mb-12">
-          <div className="flex items-center gap-3 font-bold text-[#D47225] mb-6">
+        <div className="border border-neutral-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 bg-neutral-50/50 mb-8 sm:mb-12">
+          <div className="flex items-center gap-3 font-bold text-[#D47225] mb-4 sm:mb-6">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             Petunjuk Pengerjaan:
           </div>
-          <ul className="text-neutral-600 space-y-4 list-disc list-outside ml-5">
+          <ul className="text-neutral-600 space-y-3 list-disc list-outside ml-5 text-sm sm:text-base">
             <li>{instructions}</li>
             <li>Waktu pengerjaan: {subChapter.duration} menit.</li>
             <li>Klik tombol "Mulai Quiz" untuk memulai pengerjaan.</li>
           </ul>
         </div>
 
-        <div className="flex justify-between items-center border-t border-neutral-100 pt-8">
-          <div className="flex gap-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-neutral-100 pt-6 sm:pt-8 gap-4">
+          <div className="flex gap-6 sm:gap-12">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#D47225]/10 flex items-center justify-center text-[#D47225]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -115,7 +115,7 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
           </div>
           <button 
             onClick={() => setQuizStarted(true)}
-            className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-4 px-10 rounded-full transition-colors flex items-center gap-2"
+            className="w-full sm:w-auto bg-[#003855] hover:bg-[#00273c] text-white font-bold py-3 sm:py-4 px-8 sm:px-10 rounded-full transition-colors flex items-center justify-center gap-2"
           >
             MULAI QUIZ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
@@ -128,15 +128,15 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
   const progressPercent = ((activeIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="bg-white p-10 lg:p-14 rounded-3xl shadow-sm border border-neutral-200">
+    <div className="bg-white p-5 sm:p-10 lg:p-14 rounded-3xl shadow-sm border border-neutral-200">
       
       {/* Progress Bar & Header */}
-      <div className="flex items-center gap-6 mb-12">
-        <div className="text-sm font-bold text-[#0B2545] shrink-0 uppercase tracking-widest">
-          SOAL {activeIndex + 1} DARI {questions.length}
+      <div className="flex items-center gap-3 sm:gap-6 mb-8 sm:mb-12">
+        <div className="text-xs sm:text-sm font-bold text-[#0B2545] shrink-0 uppercase tracking-widest">
+          SOAL {activeIndex + 1}/{questions.length}
         </div>
-        <div className="font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full tabular-nums shrink-0 flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <div className="font-bold text-red-500 bg-red-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full tabular-nums shrink-0 flex items-center gap-1.5 text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           {formatTime(timeLeft)}
         </div>
         <div className="h-2 bg-neutral-100 rounded-full flex-1 overflow-hidden">
@@ -145,22 +145,22 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
       </div>
       
       {submitted && (
-        <div className={`p-6 rounded-2xl mb-12 border-2 ${score >= 70 ? 'bg-green-50/50 border-green-200 text-green-800' : 'bg-red-50/50 border-red-200 text-red-800'}`}>
-          <h4 className="font-black text-2xl mb-2 text-center">Nilai Anda: {score}</h4>
-          <p className="text-center font-medium">{score >= 70 ? '🎉 Selamat! Anda lulus kuis ini.' : 'Maaf, Anda belum lulus kuis ini. Tetap semangat!'}</p>
+        <div className={`p-5 sm:p-6 rounded-2xl mb-8 sm:mb-12 border-2 ${score >= 70 ? 'bg-green-50/50 border-green-200 text-green-800' : 'bg-red-50/50 border-red-200 text-red-800'}`}>
+          <h4 className="font-black text-xl sm:text-2xl mb-2 text-center">Nilai Anda: {score}</h4>
+          <p className="text-center font-medium text-sm sm:text-base">{score >= 70 ? '🎉 Selamat! Anda lulus kuis ini.' : 'Maaf, Anda belum lulus kuis ini. Tetap semangat!'}</p>
         </div>
       )}
 
-      <div className="min-h-[400px]">
-        {/* Render blocks (text/question) */}
-        <div className="mb-10">
+      <div className="min-h-[300px] sm:min-h-[400px]">
+        {/* Question text */}
+        <div className="mb-6 sm:mb-10">
           {q.blocks.map((b: any) => (
-            <p key={b.id} className="text-xl lg:text-2xl font-bold text-[#0B2545] leading-relaxed mb-6">{b.content}</p>
+            <p key={b.id} className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B2545] leading-relaxed mb-4 sm:mb-6">{b.content}</p>
           ))}
         </div>
 
         {/* Options */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {q.options.map((opt: any) => {
             const isSelected = answers[activeIndex] === opt.id;
             let optionStyle = 'border-neutral-200 hover:border-[#0B2545] text-neutral-700';
@@ -178,25 +178,25 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
                 key={opt.id}
                 onClick={() => handleSelectOption(opt.id)}
                 disabled={submitted}
-                className={`w-full text-left px-8 py-5 rounded-full border-2 transition-all flex items-center gap-5 ${optionStyle}`}
+                className={`w-full text-left px-4 sm:px-8 py-4 sm:py-5 rounded-full border-2 transition-all flex items-center gap-3 sm:gap-5 ${optionStyle}`}
               >
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected || (submitted && opt.isCorrect) ? 'border-current' : 'border-neutral-300'}`}>
-                  {(isSelected || (submitted && opt.isCorrect)) && <div className="w-3 h-3 rounded-full bg-current"></div>}
+                <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected || (submitted && opt.isCorrect) ? 'border-current' : 'border-neutral-300'}`}>
+                  {(isSelected || (submitted && opt.isCorrect)) && <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-current"></div>}
                 </div>
-                <span className="text-lg leading-snug">{opt.text}</span>
+                <span className="text-sm sm:text-lg leading-snug">{opt.text}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <div className="flex justify-between items-center border-t border-neutral-100 pt-8 mt-12">
+      <div className="flex justify-between items-center border-t border-neutral-100 pt-6 sm:pt-8 mt-8 sm:mt-12 gap-3">
         <button 
           onClick={handlePrev}
           disabled={activeIndex === 0}
-          className="border-2 border-[#0B2545] text-[#0B2545] font-bold py-4 px-8 rounded-full hover:bg-neutral-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-2"
+          className="border-2 border-[#0B2545] text-[#0B2545] font-bold py-3 sm:py-4 px-5 sm:px-8 rounded-full hover:bg-neutral-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> SEBELUMNYA
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> SEBELUMNYA
         </button>
 
         {!submitted ? (
@@ -204,28 +204,28 @@ const StudentQuiz = ({ chapterId, subChapter, onComplete }: { chapterId: any, su
             <button 
               onClick={handleSubmit}
               disabled={Object.keys(answers).length < questions.length}
-              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-4 px-10 rounded-full transition-colors disabled:opacity-50"
+              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-3 sm:py-4 px-6 sm:px-10 rounded-full transition-colors disabled:opacity-50 text-sm sm:text-base"
             >
-              SUBMIT JAWABAN
+              SUBMIT
             </button>
           ) : (
             <button 
               onClick={handleNext}
-              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-4 px-8 rounded-full transition-colors flex items-center gap-2"
+              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-3 sm:py-4 px-5 sm:px-8 rounded-full transition-colors flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
             >
-              SELANJUTNYA <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              SELANJUTNYA <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           )
         ) : (
           activeIndex < questions.length - 1 ? (
             <button 
               onClick={handleNext}
-              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-4 px-8 rounded-full transition-colors flex items-center gap-2"
+              className="bg-[#003855] hover:bg-[#00273c] text-white font-bold py-3 sm:py-4 px-5 sm:px-8 rounded-full transition-colors flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
             >
-              SELANJUTNYA <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              SELANJUTNYA <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           ) : (
-            <div className="text-sm font-bold text-green-600 bg-green-50 px-6 py-3 rounded-full">KUIS SELESAI</div>
+            <div className="text-xs sm:text-sm font-bold text-green-600 bg-green-50 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full">KUIS SELESAI</div>
           )
         )}
       </div>
@@ -515,12 +515,12 @@ export default function StudentCourseMaterialPage() {
       <div className="flex-1 flex flex-col relative overflow-hidden bg-white">
         
         {/* Header */}
-        <div className="h-20 bg-white border-b border-neutral-200 flex items-center px-8 shadow-sm shrink-0 z-10 justify-between">
+        <div className="h-16 sm:h-20 bg-white border-b border-neutral-200 flex items-center px-4 sm:px-8 shadow-sm shrink-0 z-10 justify-between">
           <div>
-            <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">
+            <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-0.5 sm:mb-1">
               {isOverviewActive ? 'Course Introduction' : 'Materi Pembelajaran'}
             </div>
-            <h1 className="text-2xl font-black text-[#0B2545] tracking-tight">
+            <h1 className="text-lg sm:text-2xl font-black text-[#0B2545] tracking-tight">
               {isOverviewActive ? 'Overview' : activeSubChapter?.title || ''}
             </h1>
           </div>
@@ -528,10 +528,10 @@ export default function StudentCourseMaterialPage() {
 
         {/* Content Render Area */}
         <div className="flex-1 overflow-y-auto bg-[#F9FAFC] relative">
-          <div className="max-w-4xl mx-auto py-12 px-8">
+          <div className="max-w-4xl mx-auto py-6 sm:py-12 px-3 sm:px-8">
             
             {!isOverviewActive && activeSubChapter?.type === 'quiz' ? (
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
+              <div>
                 <StudentQuiz 
                   chapterId={chapters.find((c:any) => c.subChapters.some((s:any) => s.id === activeSubChapter.id))?.id} 
                   subChapter={activeSubChapter} 
