@@ -57,3 +57,7 @@ body {
 input, textarea, select {
   color: #171717 !important;
 }
+
+input.text-white, textarea.text-white {
+  color: #ffffff !important;
+}
