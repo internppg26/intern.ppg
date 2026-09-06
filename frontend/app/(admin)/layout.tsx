@@ -129,7 +129,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col bg-[#F9FAFC] overflow-hidden">
+      <main className="flex-1 flex flex-col bg-[#F9FAFC] overflow-hidden min-w-0">
         {children}
       </main>
     </div>

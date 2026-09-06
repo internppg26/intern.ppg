@@ -52,13 +52,13 @@ export default function AdminTransactionsPage() {
   };
 
   return (
-    <div className="p-8 lg:p-12 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-[#0B2545]">Verifikasi Pembayaran</h1>
-        <p className="text-neutral-500">Daftar transaksi murid yang perlu diverifikasi.</p>
+    <div className="p-4 sm:p-8 lg:p-12 w-full max-w-7xl mx-auto flex flex-col min-w-0 flex-1 overflow-y-auto">
+      <div className="mb-6 sm:mb-8 shrink-0">
+        <h1 className="text-2xl sm:text-3xl font-black text-[#0B2545]">Verifikasi Pembayaran</h1>
+        <p className="text-sm sm:text-base text-neutral-500">Daftar transaksi murid yang perlu diverifikasi.</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 w-full shrink-0 flex flex-col min-h-0">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-sm min-w-[700px]">
             <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-500 uppercase text-[10px] tracking-wider font-bold">
