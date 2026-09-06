@@ -122,7 +122,7 @@ function ListCourseContent() {
           let customInstructor = '';
           try {
             const parsed = JSON.parse(safeDesc);
-            safeDesc = parsed.shortDesc || parsed.about || safeDesc;
+            safeDesc = parsed.shortDesc ?? parsed.about ?? '';
             customInstructor = parsed.instructorName || '';
           } catch(e) {}
 
