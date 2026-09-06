@@ -16,6 +16,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "LMS PPG - Company Profile & Learning Management",
   description: "PT. Performa Puncak Group - Sistem Manajemen Pembelajaran (LMS) dan Company Profile",
+  icons: {
+    icon: '/ppg-logo.jpg',
+    shortcut: '/ppg-logo.jpg',
+    apple: '/ppg-logo.jpg',
+  },
 };
 
 import Providers from "./Providers";

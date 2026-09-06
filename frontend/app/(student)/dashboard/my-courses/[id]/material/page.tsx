@@ -246,6 +246,7 @@ export default function StudentCourseMaterialPage() {
   const [completedSubs, setCompletedSubs] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseDuration, setCourseDuration] = useState<number | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/enrollments', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
@@ -412,10 +413,27 @@ export default function StudentCourseMaterialPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
+    <div className="flex h-screen bg-[#F8F9FA] overflow-hidden relative">
+
+      {/* Mobile Sidebar Toggle */}
+      <button
+        className="md:hidden absolute top-4 left-0 z-50 bg-[#E5832E] hover:bg-[#D47225] text-white p-2 rounded-r-md shadow-md transition-colors"
+        onClick={() => setIsSidebarOpen(true)}
+        style={{ display: isSidebarOpen ? 'none' : undefined }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="13 17 18 12 13 7"></polyline><line x1="6" y1="17" x2="6" y2="7"></line></svg>
+      </button>
+
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       
       {/* Sidebar - Read Only */}
-      <div className="w-[300px] flex-shrink-0 bg-white border-r border-neutral-200 flex flex-col h-full shadow-lg z-10">
+      <div className={`w-[300px] flex-shrink-0 bg-white border-r border-neutral-200 flex flex-col h-full shadow-lg z-40 absolute md:relative transition-all duration-300 ${isSidebarOpen ? 'left-0' : '-left-[300px] md:left-0'}`}>
         <div className="p-6 border-b border-neutral-200 bg-[#F9FAFC]">
           <Link href="/dashboard/my-courses" className="inline-flex items-center text-xs font-bold text-[#E5832E] hover:text-[#D47225] transition-colors mb-4">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-1"><polyline points="15 18 9 12 15 6"></polyline></svg>

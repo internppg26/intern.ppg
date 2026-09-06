@@ -122,6 +122,7 @@ export default function AdminCourseMaterialPage() {
   ]);
   const [showSlashMenu, setShowSlashMenu] = useState<string | null>(null); // block id where menu is open
   const slashMenuRef = useRef<HTMLDivElement>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // History for Undo/Redo
   const [history, setHistory] = useState<Block[][]>([[{ id: '1', type: 'empty', content: '' }]]);
@@ -394,10 +395,27 @@ export default function AdminCourseMaterialPage() {
   };
 
   return (
-    <div className="flex h-screen bg-neutral-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-neutral-50 overflow-hidden font-sans relative">
       
+      {/* Mobile Sidebar Toggle */}
+      <button
+        className="md:hidden absolute top-4 left-0 z-50 bg-[#E5832E] hover:bg-[#D47225] text-white p-2 rounded-r-md shadow-md transition-colors"
+        onClick={() => setIsSidebarOpen(true)}
+        style={{ display: isSidebarOpen ? 'none' : undefined }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="13 17 18 12 13 7"></polyline><line x1="6" y1="17" x2="6" y2="7"></line></svg>
+      </button>
+
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* LEFT SIDEBAR */}
-      <div className="w-80 bg-white border-r border-neutral-200 flex flex-col shrink-0">
+      <div className={`w-80 bg-white border-r border-neutral-200 flex flex-col shrink-0 absolute md:relative h-full z-40 transition-all duration-300 ${isSidebarOpen ? 'left-0' : '-left-80 md:left-0'}`}>
         <div className="p-6 border-b border-neutral-200">
           <Link href={`/admin/courses/${params.id}/${params.bidangId}?name=${encodeURIComponent(bidangName)}`} className="flex items-center gap-2 text-[#D47225] font-bold text-xs uppercase tracking-widest mb-6 hover:text-[#964B13] transition-colors">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>

@@ -102,82 +102,86 @@ export default function MyStudentsPage() {
 
         {/* Students Table/List */}
         <div className="bg-white rounded-[2rem] border border-neutral-200 shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-neutral-100 text-[10px] font-bold text-neutral-500 uppercase tracking-widest bg-neutral-50/50">
-            <div className="col-span-4">Student Name</div>
-            <div className="col-span-3">Enrolled Course</div>
-            <div className="col-span-2">Completion Progress</div>
-            <div className="col-span-1">Last Active</div>
-            <div className="col-span-2 text-center">Action</div>
-          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[900px]">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-neutral-100 text-[10px] font-bold text-neutral-500 uppercase tracking-widest bg-neutral-50/50">
+                <div className="col-span-4">Student Name</div>
+                <div className="col-span-3">Enrolled Course</div>
+                <div className="col-span-2">Completion Progress</div>
+                <div className="col-span-1">Last Active</div>
+                <div className="col-span-2 text-center">Action</div>
+              </div>
 
-          {/* Table Body */}
-          <div className="divide-y divide-neutral-100">
-            {students
-              .filter(student => student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.email.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((student) => (
-              <div key={student.id} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-neutral-50/50 transition-colors">
+              {/* Table Body */}
+              <div className="divide-y divide-neutral-100">
+                {students
+                  .filter(student => student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map((student) => (
+                  <div key={student.id} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-neutral-50/50 transition-colors">
+                    
+                    {/* Name & Avatar */}
+                    <div className="col-span-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EAF1F8] flex items-center justify-center shrink-0 border border-neutral-200">
+                        {student.avatar ? (
+                          <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-bold text-[#0B2545]">{student.initials}</span>
+                        )}
+                      </div>
+                      <div className="overflow-hidden">
+                        <h4 className="font-bold text-[#0B2545] truncate">{student.name}</h4>
+                        <p className="text-[11px] text-neutral-500 truncate">{student.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Course Badge */}
+                    <div className="col-span-3">
+                      <span className="inline-block bg-[#EAF1F8] text-[#0B2545] text-xs font-semibold px-3 py-1.5 rounded-lg leading-tight truncate max-w-full">
+                        {student.course}
+                      </span>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="col-span-2">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-xs font-bold text-[#0B2545] flex items-center gap-1">
+                          {student.progress}%
+                          {student.progress === 100 && <svg className="w-3 h-3 text-[#D47225]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>}
+                        </span>
+                        <span className={`text-[10px] font-bold ${student.progress === 100 ? 'text-[#D47225]' : 'text-neutral-500'}`}>
+                          {student.moduleProgress}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-[#F4E3D7] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-[#D47225] rounded-full"
+                          style={{ width: `${student.progress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Last Active */}
+                    <div className="col-span-1">
+                      <span className="text-xs text-neutral-500">{student.lastActive}</span>
+                    </div>
+
+                    {/* Action */}
+                    <div className="col-span-2 flex justify-center">
+                      <button className="px-5 py-2 border-2 border-neutral-300 text-neutral-500 hover:border-[#0B2545] hover:text-[#0B2545] rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors whitespace-nowrap">
+                        Hubungi Peserta
+                      </button>
+                    </div>
+                  </div>
+                ))}
                 
-                {/* Name & Avatar */}
-                <div className="col-span-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EAF1F8] flex items-center justify-center shrink-0 border border-neutral-200">
-                    {student.avatar ? (
-                      <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold text-[#0B2545]">{student.initials}</span>
-                    )}
+                {students.filter(student => student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                  <div className="py-8 text-center text-sm text-neutral-500">
+                    Tidak ada data peserta yang cocok dengan "{searchTerm}".
                   </div>
-                  <div>
-                    <h4 className="font-bold text-[#0B2545]">{student.name}</h4>
-                    <p className="text-[11px] text-neutral-500">{student.email}</p>
-                  </div>
-                </div>
-
-                {/* Course Badge */}
-                <div className="col-span-3">
-                  <span className="inline-block bg-[#EAF1F8] text-[#0B2545] text-xs font-semibold px-3 py-1.5 rounded-lg leading-tight max-w-[200px]">
-                    {student.course}
-                  </span>
-                </div>
-
-                {/* Progress */}
-                <div className="col-span-2">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-xs font-bold text-[#0B2545] flex items-center gap-1">
-                      {student.progress}%
-                      {student.progress === 100 && <svg className="w-3 h-3 text-[#D47225]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>}
-                    </span>
-                    <span className={`text-[10px] font-bold ${student.progress === 100 ? 'text-[#D47225]' : 'text-neutral-500'}`}>
-                      {student.moduleProgress}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-[#F4E3D7] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#D47225] rounded-full"
-                      style={{ width: `${student.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Last Active */}
-                <div className="col-span-1">
-                  <span className="text-xs text-neutral-500">{student.lastActive}</span>
-                </div>
-
-                {/* Action */}
-                <div className="col-span-2 flex justify-center">
-                  <button className="px-5 py-2 border-2 border-neutral-300 text-neutral-500 hover:border-[#0B2545] hover:text-[#0B2545] rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors">
-                    Hubungi Peserta
-                  </button>
-                </div>
+                )}
               </div>
-            ))}
-            
-            {students.filter(student => student.name.toLowerCase().includes(searchTerm.toLowerCase()) || student.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
-              <div className="py-8 text-center text-sm text-neutral-500">
-                Tidak ada data peserta yang cocok dengan "{searchTerm}".
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
