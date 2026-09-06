@@ -9,6 +9,9 @@ export default function StudentDashboard() {
   const [completedCourses, setCompletedCourses] = React.useState(0);
   const [certificatesCount, setCertificatesCount] = React.useState(0);
   const [recentCourse, setRecentCourse] = React.useState<any>(null);
+  
+  const [schedules, setSchedules] = React.useState<any[]>([]);
+  const [completedEnrollments, setCompletedEnrollments] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -32,12 +35,25 @@ export default function StudentDashboard() {
       .then(data => {
         if (Array.isArray(data)) {
           const activeList = data.filter((e: any) => !e.isCompleted);
-          const completedList = data.filter((e: any) => e.isCompleted);
+          const completedList = data.filter((e: any) => e.status === 'completed' || e.isCompleted === true);
           setActiveCourses(activeList.length);
           setCompletedCourses(completedList.length);
+          setCompletedEnrollments(completedList);
           if (activeList.length > 0) {
             setRecentCourse(activeList[0]);
           }
+        }
+      })
+      .catch(console.error);
+
+      // Fetch Schedules
+      fetch('/api/schedules', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setSchedules(data);
         }
       })
       .catch(console.error);
@@ -155,55 +171,57 @@ export default function StudentDashboard() {
           </div>
           
           <div className="space-y-4">
-            {[
-              { title: "Quarterly Performance Review", date: "Oct 24, 2023 • 02:00 PM", icon: <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect> },
-              { title: "Leadership Skill Assessment", date: "Oct 26, 2023 • 09:00 AM", icon: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path> },
-              { title: "1-on-1 Mentoring Session", date: "Oct 28, 2023 • 11:30 AM", icon: <polygon points="23 7 16 12 23 17 23 7"></polygon> }
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg group hover:border-[#D47225] transition-colors cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-[#F4F7F9] rounded flex items-center justify-center text-[#0B2545]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      {item.icon}
-                    </svg>
+            {schedules.length > 0 ? schedules.slice(0, 3).map((item, i) => {
+              const programName = item.Program?.category ? item.Program.category.split('||')[0].replace(/ Program/gi, '') : 'Program';
+              return (
+                <div key={i} className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg group hover:border-[#D47225] transition-colors cursor-pointer" onClick={() => window.location.href = '/dashboard/schedule'}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-[#F4F7F9] rounded flex items-center justify-center text-[#0B2545]">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#0B2545] mb-1 group-hover:text-[#D47225] transition-colors">{item.topic}</h4>
+                      <p className="text-xs text-[#D47225] font-bold">{item.date} • {item.startTime} - {item.endTime}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#0B2545] mb-1 group-hover:text-[#D47225] transition-colors">{item.title}</h4>
-                    <p className="text-xs text-[#D47225] font-bold">{item.date}</p>
-                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 group-hover:text-[#D47225]"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 group-hover:text-[#D47225]"><path d="M9 18l6-6-6-6"/></svg>
-              </div>
-            ))}
+              );
+            }) : (
+              <div className="text-sm text-neutral-500 italic p-4 text-center">Belum ada jadwal coaching.</div>
+            )}
           </div>
         </div>
 
-        {/* File Unduhan */}
+        {/* E-Certificate */}
         <div className="bg-white p-8 rounded-xl border border-neutral-200 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-base font-black text-[#0B2545] uppercase tracking-wide">FILE UNDUHAN TERBARU</h3>
-            <Link href="/dashboard/downloads" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">BROWSE FILES</Link>
+            <h3 className="text-base font-black text-[#0B2545] uppercase tracking-wide">E-CERTIFICATE TERBARU</h3>
+            <Link href="/dashboard/certificates" className="text-[#D47225] text-[10px] font-bold uppercase tracking-widest hover:underline">VIEW ALL</Link>
           </div>
           
           <div className="space-y-4">
-            {[
-              { title: "Company_Policy_2024.pdf", size: "2.4 MB • PDF", type: "pdf" },
-              { title: "Learning_Syllabus_Leadership.docx", size: "850 KB • Word", type: "doc" },
-              { title: "Budgeting_Exercise_v1.xlsx", size: "1.2 MB • Excel", type: "xls" }
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-[#F8F9FA] rounded-lg group hover:bg-neutral-100 transition-colors cursor-pointer border border-transparent hover:border-neutral-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-neutral-200 rounded flex items-center justify-center text-[#0B2545]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            {completedEnrollments.length > 0 ? completedEnrollments.slice(0, 3).map((enr, i) => {
+              const programName = enr.Program?.category ? enr.Program.category.split('||')[0].replace(/ Program/gi, '') : 'Program';
+              return (
+                <div key={i} className="flex items-center justify-between p-4 bg-[#F8F9FA] rounded-lg group hover:bg-neutral-100 transition-colors cursor-pointer border border-transparent hover:border-neutral-200" onClick={() => window.location.href = '/dashboard/certificates'}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-neutral-200 rounded flex items-center justify-center text-[#0B2545]">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#0B2545] mb-1">Sertifikat {programName}</h4>
+                      <p className="text-xs text-[#D47225] font-bold">Lulus Program</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-[#0B2545] mb-1">{item.title}</h4>
-                    <p className="text-xs text-[#D47225] font-bold">{item.size}</p>
-                  </div>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2" className="text-[#D47225]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 </div>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D47225" strokeWidth="2" className="text-[#D47225]"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              </div>
-            ))}
+              );
+            }) : (
+              <div className="text-sm text-neutral-500 italic p-4 text-center">Belum ada E-Certificate.</div>
+            )}
           </div>
         </div>
 

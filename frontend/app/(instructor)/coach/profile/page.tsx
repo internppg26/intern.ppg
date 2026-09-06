@@ -397,7 +397,7 @@ export default function InstructorProfilePage() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
             <h2 className="text-xl font-bold tracking-tight mb-2">Performa Puncak Group</h2>
-            <p className="text-white/50 text-xs">© 2023 PT. Performa Puncak Group. All rights reserved.</p>
+            <p className="text-white/50 text-xs">© 2012 PT. Performa Puncak Group. All rights reserved.</p>
           </div>
           <div className="flex flex-wrap gap-8 text-[10px] font-bold tracking-widest text-white/70">
             <Link href="#" className="hover:text-white transition-colors">SUPPORT CENTER</Link>

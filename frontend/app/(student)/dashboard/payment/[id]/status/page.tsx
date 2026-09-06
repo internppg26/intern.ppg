@@ -12,31 +12,45 @@ export default function PaymentSuccessPage() {
   const [price, setPrice] = useState('0');
 
   useEffect(() => {
-    fetch('/api/enrollments', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        const enr = data.find((e: any) => e.programId === Number(params?.id));
-        if (enr) {
-          setEnrollment(enr);
-          const course = enr.Program;
-          if (course && course.category) {
-            let progName = course.category.split('||')[0].replace(/ Program/gi, '');
-            setCourseProgramName(progName);
-          }
-          if (course && course.description) {
-            try {
-              const parsed = JSON.parse(course.description);
-              setPrice(parsed.price || '0');
-            } catch(e) {}
+    let interval: NodeJS.Timeout;
+
+    const checkStatus = () => {
+      fetch('/api/enrollments', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const enr = data.find((e: any) => e.programId === Number(params?.id));
+          if (enr) {
+            setEnrollment(enr);
+            const course = enr.Program;
+            if (course && course.category) {
+              let progName = course.category.split('||')[0].replace(/ Program/gi, '');
+              setCourseProgramName(progName);
+            }
+            if (course && course.description) {
+              try {
+                const parsed = JSON.parse(course.description);
+                setPrice(parsed.price || '0');
+              } catch(e) {}
+            }
+            
+            // If the status is no longer pending, stop polling
+            if (enr.paymentStatus !== 'pending') {
+              if (interval) clearInterval(interval);
+            }
           }
         }
-      }
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+    };
+
+    checkStatus();
+    interval = setInterval(checkStatus, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
   }, [params?.id]);
 
   if (loading) {
