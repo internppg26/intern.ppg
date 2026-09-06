@@ -88,14 +88,22 @@ function ListCourseContent() {
 
   // Parse parent program name from localStorage for the API category tag
   const getParentProgramName = () => {
+    let programsList = [
+      { id: 1, title: 'CORPORATE PROGRAM' },
+      { id: 2, title: 'GOVERNMENT PROGRAM' },
+      { id: 3, title: 'EDUCATIONAL PROGRAM' },
+      { id: 4, title: 'INDIVIDUAL PROGRAM' },
+      { id: 5, title: 'CUSTOM PROGRAM' },
+      { id: 6, title: 'OTHER PROGRAM' },
+    ];
     const saved = localStorage.getItem('admin_programs');
     if (saved) {
       try {
-        const progs = JSON.parse(saved);
-        const p = progs.find((x: any) => x.id.toString() === params?.id);
-        if (p) return p.title;
+        programsList = JSON.parse(saved);
       } catch (e) {}
     }
+    const p = programsList.find((x: any) => x.id.toString() === params?.id);
+    if (p) return p.title;
     return 'Corporate Program'; // fallback
   };
 
