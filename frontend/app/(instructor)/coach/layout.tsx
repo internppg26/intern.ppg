@@ -12,6 +12,7 @@ export default function CoachLayout({
   const pathname = usePathname();
 
   const [currentUser, setCurrentUser] = React.useState<any>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   React.useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -44,16 +45,39 @@ export default function CoachLayout({
   ];
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden relative">
       
+      {/* Sidebar Toggle Button for Mobile */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="md:hidden absolute top-4 left-0 z-50 bg-[#E5832E] hover:bg-[#D47225] text-white p-2 rounded-r-md shadow-md transition-colors"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="13 17 18 12 13 7"></polyline><line x1="6" y1="17" x2="6" y2="7"></line></svg>
+        </button>
+      )}
+
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-[280px] bg-[#0B2545] text-white flex flex-col hidden md:flex flex-shrink-0 z-20 shadow-2xl">
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8">
-            <img src="/Logo_Performa_Puncak.png" alt="Logo" className="w-full h-full object-contain" />
+      <aside className={`w-[280px] h-full flex-shrink-0 bg-[#0B2545] text-white flex flex-col z-40 shadow-2xl absolute md:relative transition-all duration-300 ${isSidebarOpen ? 'left-0' : '-left-[280px] md:left-0'}`}>
+        {/* Logo and Mobile Close */}
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8">
+              <img src="/Logo_Performa_Puncak.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-bold text-sm tracking-wide">Performa Puncak Group</span>
           </div>
-          <span className="font-bold text-sm tracking-wide">Performa Puncak Group</span>
+          <button className="md:hidden text-white/70 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
         {/* User Profile */}

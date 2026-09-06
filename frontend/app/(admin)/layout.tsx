@@ -13,6 +13,12 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     
@@ -55,8 +61,16 @@ export default function AdminLayout({
         </button>
       )}
 
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`bg-[#0B2545] text-white flex-col hidden md:flex flex-shrink-0 z-40 shadow-2xl transition-all duration-300 ${isSidebarOpen ? 'w-[280px]' : 'w-0 overflow-hidden'}`}>
+      <aside className={`bg-[#0B2545] text-white flex-col flex flex-shrink-0 z-40 shadow-2xl transition-all duration-300 absolute md:relative h-full ${isSidebarOpen ? 'w-[280px] left-0' : 'w-0 -left-[280px] md:left-0 overflow-hidden'}`}>
         {/* Logo and Toggle */}
         <div className="p-6 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
