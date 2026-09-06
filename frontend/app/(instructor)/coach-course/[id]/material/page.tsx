@@ -513,6 +513,7 @@ export default function CoachCourseMaterialPage() {
                         onChange={(e) => handleEditSidebarSubBabTitle(ch.id, sub.id, e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                         className={`font-bold w-full bg-transparent focus:outline-none ${(!isOverviewActive && sub.isActive) ? 'text-white' : 'text-[#0B2545]'}`}
+                        style={{ color: (!isOverviewActive && sub.isActive) ? 'white' : 'inherit' }}
                       />
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={sub.isActive ? 'text-white/70' : 'text-neutral-500'}>{sub.duration} min</span>

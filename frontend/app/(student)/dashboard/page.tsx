@@ -125,7 +125,7 @@ export default function StudentDashboard() {
           </div>
 
           <div className="flex justify-end">
-            <Link href={`/course/${recentCourse.programId}/material`} className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-8 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors">
+            <Link href={`/dashboard/my-courses/${recentCourse.programId}/material`} className="bg-[#D47225] hover:bg-[#B55D1A] text-white px-8 py-3 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors">
               RESUME COURSE / LANJUT BELAJAR
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </Link>

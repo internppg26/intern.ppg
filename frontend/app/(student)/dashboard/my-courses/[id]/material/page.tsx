@@ -242,26 +242,12 @@ export default function StudentCourseMaterialPage() {
   const [isOverviewActive, setIsOverviewActive] = useState(true);
   const [overviewBlocks, setOverviewBlocks] = useState<any[]>([]);
 
-  const [backText, setBackText] = useState('KEMBALI KE PELATIHAN SAYA');
-  const [backUrl, setBackUrl] = useState('/dashboard/my-courses');
   const [enrollment, setEnrollment] = useState<any>(null);
   const [completedSubs, setCompletedSubs] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseDuration, setCourseDuration] = useState<number | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (document.referrer.includes('/dashboard/catalog')) {
-        setBackText('KEMBALI KE KATALOG PELATIHAN');
-        setBackUrl(document.referrer);
-      } else if (document.referrer.includes('/dashboard/my-courses')) {
-        setBackText('KEMBALI KE PELATIHAN SAYA');
-        setBackUrl(document.referrer);
-      } else {
-        setBackUrl('/dashboard/my-courses');
-      }
-    }
-    
     fetch('/api/enrollments', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
       .then(res => res.json())
       .then(data => {
@@ -431,9 +417,9 @@ export default function StudentCourseMaterialPage() {
       {/* Sidebar - Read Only */}
       <div className="w-[300px] flex-shrink-0 bg-white border-r border-neutral-200 flex flex-col h-full shadow-lg z-10">
         <div className="p-6 border-b border-neutral-200 bg-[#F9FAFC]">
-          <Link href={backUrl} className="inline-flex items-center text-xs font-bold text-[#E5832E] hover:text-[#D47225] transition-colors mb-4">
+          <Link href="/dashboard/my-courses" className="inline-flex items-center text-xs font-bold text-[#E5832E] hover:text-[#D47225] transition-colors mb-4">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-1"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            {backText}
+            KEMBALI KE PELATIHAN SAYA
           </Link>
           <div className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-1">{courseProgramName}</div>
           <h2 className="text-lg font-black text-[#0B2545] leading-tight">{courseTitle}</h2>
