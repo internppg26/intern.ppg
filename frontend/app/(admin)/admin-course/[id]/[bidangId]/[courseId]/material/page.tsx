@@ -524,52 +524,51 @@ export default function AdminCourseMaterialPage() {
       <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
         
         {/* Top Header */}
-        <div className="px-8 py-4 flex items-center justify-between border-b border-neutral-200 shrink-0 bg-white z-10">
-          <div className="text-[10px] md:text-xs font-bold text-neutral-500">
+        <div className="px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between border-b border-neutral-200 shrink-0 bg-white z-10">
+          <div className="text-[10px] font-bold text-neutral-500 truncate max-w-[60%]">
             <Link href={`/admin/courses/${params.id}/${params.bidangId}?name=${encodeURIComponent(bidangName)}`} className="hover:text-[#D47225]">PROGRAM</Link> &gt; <span className="text-[#0B2545] font-black">Course {courseTitle}</span>
           </div>
-          <div className="flex items-center gap-4">
-
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="text-right hidden md:block">
               <div className="text-xs font-bold text-[#0B2545]">Super Admin</div>
               <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">SYSTEM AUTHORITY</div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-sm shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#F4E3D7] text-[#D47225] flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
               SA
             </div>
           </div>
         </div>
 
         {activeSubChapter?.type === 'quiz' ? (
-          <div className="flex-1 overflow-hidden flex flex-col pt-8">
-            <div className="max-w-4xl mx-auto w-full mb-8 px-12 shrink-0">
+          <div className="flex-1 overflow-hidden flex flex-col pt-4 sm:pt-8">
+            <div className="max-w-4xl mx-auto w-full mb-4 sm:mb-8 px-4 sm:px-12 shrink-0">
               <div className="flex items-center gap-2 mb-2 text-xs font-bold text-[#0B2545] uppercase tracking-widest">
                 <span className="bg-[#0B2545] text-white px-3 py-1 rounded-full">BAB 1</span>
               </div>
-              <div className="flex justify-between items-start">
-                <h1 className="text-4xl font-black text-[#0B2545] uppercase tracking-tight break-words">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                <h1 className="text-2xl sm:text-4xl font-black text-[#0B2545] uppercase tracking-tight break-words">
                   {activeSubChapter.title}
                 </h1>
-                <div className="flex items-center gap-4 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 sm:shrink-0">
                   <div className="flex flex-col text-right">
                     <span className="text-[10px] text-neutral-400 font-bold tracking-widest uppercase">BATAS WAKTU MENGERJAKAN</span>
                   </div>
-                  <div className="flex items-center border border-neutral-300 rounded divide-x divide-neutral-300 overflow-hidden shrink-0 bg-white">
+                  <div className="flex items-center border border-neutral-300 rounded divide-x divide-neutral-300 overflow-hidden bg-white">
                     <input 
                       type="text" 
                       value={activeSubChapter.duration} 
                       onChange={(e) => handleEditSubBabDuration(e.target.value)}
                       className="w-12 text-center py-2 text-sm font-bold text-[#0B2545] focus:outline-none" 
                     />
-                    <span className="px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
+                    <span className="px-3 sm:px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
                   </div>
-                  <button className="bg-[#0B2545] hover:bg-[#13325B] text-white px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
+                  <button className="bg-[#0B2545] hover:bg-[#13325B] text-white px-4 sm:px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
                     SIMPAN
                   </button>
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto w-full flex flex-col px-12 pb-12 items-center">
+            <div className="flex-1 overflow-y-auto w-full flex flex-col px-4 sm:px-12 pb-12 items-center">
               <div className="w-full max-w-4xl">
                 <QuizEditor duration={activeSubChapter.duration} />
               </div>
@@ -578,11 +577,11 @@ export default function AdminCourseMaterialPage() {
         ) : (
           <>
             {/* Content Scrollable Area */}
-            <div className="flex-1 overflow-y-auto p-12">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-12">
               <div className="max-w-4xl mx-auto">
                 
                 {/* Header Title Editor */}
-                <div className="flex justify-between items-start mb-8 gap-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 sm:mb-8 gap-3 sm:gap-8">
                   <div className="flex-1 min-w-0">
                     {!isOverviewActive && (
                       <div className="flex items-center gap-2 mb-2 text-xs font-bold text-[#0B2545] uppercase tracking-widest">
@@ -590,13 +589,13 @@ export default function AdminCourseMaterialPage() {
                         <span>&mdash; INTRODUCTION</span>
                       </div>
                     )}
-                    <h1 className="text-4xl font-black text-[#0B2545] uppercase tracking-tight break-words">
+                    <h1 className="text-2xl sm:text-4xl font-black text-[#0B2545] uppercase tracking-tight break-words">
                       {isOverviewActive ? 'OVERVIEW' : (activeSubChapter ? activeSubChapter.title : 'SUB-BAB 2 : 6 CORE PRINCIPLES')}
                     </h1>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 sm:shrink-0">
                     {isSubBab1 && !isOverviewActive && (
-                      <span className="text-xs text-neutral-500 max-w-[200px] text-right">Waktu perkiraan untuk menyelesaikan materi ini (bukan batas waktu)</span>
+                      <span className="text-xs text-neutral-500 max-w-[200px] text-right hidden sm:block">Waktu perkiraan untuk menyelesaikan materi ini (bukan batas waktu)</span>
                     )}
                     {!isOverviewActive && (
                       <div className="flex items-center border border-neutral-300 rounded divide-x divide-neutral-300 overflow-hidden shrink-0">
@@ -606,10 +605,10 @@ export default function AdminCourseMaterialPage() {
                           onChange={(e) => handleEditSubBabDuration(e.target.value)}
                           className="w-12 text-center py-2 text-sm font-bold text-[#0B2545] focus:outline-none" 
                         />
-                        <span className="px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
+                        <span className="px-3 sm:px-4 py-2 text-xs font-bold text-[#0B2545] bg-neutral-50">MENIT</span>
                       </div>
                     )}
-                    <button onClick={handleSimpan} className="bg-[#0B2545] hover:bg-[#13325B] text-white px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
+                    <button onClick={handleSimpan} className="bg-[#0B2545] hover:bg-[#13325B] text-white px-4 sm:px-6 py-2 rounded text-xs font-bold transition-colors shrink-0">
                       SIMPAN
                     </button>
                   </div>

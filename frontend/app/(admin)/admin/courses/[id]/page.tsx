@@ -204,13 +204,15 @@ export default function BidangPelatihanPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-8 lg:px-12 font-sans">
         
-        <div className="relative flex justify-center items-center mb-16 mt-8">
-          <h2 className="text-4xl font-black text-[#0B2545] tracking-tight text-center leading-tight">
-            Daftar Pelatihan<br />{programTitle}
-          </h2>
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6 mb-12 mt-4 sm:mt-8 relative">
+          <div className="flex-1 text-center sm:text-left">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0B2545] tracking-tight leading-tight">
+              Daftar Pelatihan<br className="hidden sm:block" /> {programTitle}
+            </h2>
+          </div>
           <button 
             onClick={handleAddClick}
-            className="absolute right-0 bg-[#E5832E] hover:bg-[#D47225] text-white px-8 py-3 rounded-full text-sm font-bold shadow-md transition-colors flex items-center gap-2"
+            className="bg-[#E5832E] hover:bg-[#D47225] text-white px-6 sm:px-8 py-3 rounded-full text-sm font-bold shadow-md transition-colors flex items-center justify-center gap-2 w-full sm:w-auto sm:absolute sm:right-0"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Pelatihan
