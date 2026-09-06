@@ -194,7 +194,7 @@ function AdminCMSDetailContent() {
                 value={tag} 
                 onChange={(e) => setTag(e.target.value)} 
                 placeholder="TAG"
-                className="bg-transparent border-none focus:outline-none w-24 text-center placeholder:text-white/50" 
+                className="bg-transparent border-none focus:outline-none w-24 text-center placeholder:text-white/50 text-white" 
               />
             </div>
           </div>
