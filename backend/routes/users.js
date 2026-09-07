@@ -6,7 +6,7 @@ const { hashPassword } = require('../utils/auth');
 const router = express.Router();
 
 // Get all users (Admin only)
-router.get('/', authenticate, authorize('admin', 'instructor'), async (req, res) => {
+router.get('/', authenticate, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     const users = await User.findAll({
       attributes: { exclude: ['password'] },

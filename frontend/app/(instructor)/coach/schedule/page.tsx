@@ -55,7 +55,6 @@ export default function CoachSchedulePage() {
 
   useEffect(() => {
     fetchSchedules();
-    fetchStudents();
     fetchEnrollments();
   }, []);
 
@@ -74,21 +73,6 @@ export default function CoachSchedulePage() {
     }
   };
 
-  const fetchStudents = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStudents(data.users.filter((u: User) => u.role === 'student' || u.role === 'instructor'));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const fetchEnrollments = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -98,6 +82,15 @@ export default function CoachSchedulePage() {
       if (res.ok) {
         const data = await res.json();
         setEnrollments(data);
+        
+        // Derive students list from enrollments (only students taught by this coach)
+        const uniqueStudentsMap = new Map();
+        data.forEach((e: any) => {
+          if (e.student) {
+            uniqueStudentsMap.set(e.student.id, e.student);
+          }
+        });
+        setStudents(Array.from(uniqueStudentsMap.values()));
       }
     } catch (e) {
       console.error(e);
