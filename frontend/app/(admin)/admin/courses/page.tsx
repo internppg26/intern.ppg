@@ -93,6 +93,8 @@ export default function AdminCoursesPage() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   if (!isLoaded) {
     return <div className="flex-1 bg-[#F9FAFC]"></div>;
   }
@@ -111,6 +113,8 @@ export default function AdminCoursesPage() {
             </span>
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari Pelatihan" 
               className="pl-4 pr-10 py-2 border border-neutral-300 rounded-full text-xs w-64 focus:outline-none focus:border-[#0B2545]" 
             />
@@ -146,7 +150,7 @@ export default function AdminCoursesPage() {
 
         {/* Programs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {programs.map((prog) => (
+          {programs.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase())).map((prog) => (
             <div key={prog.id} className="group bg-neutral-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-neutral-200/60 flex flex-col">
               <div className="h-48 bg-neutral-200 relative p-4">
                 <div className="w-full h-full rounded-xl bg-neutral-300 overflow-hidden flex items-center justify-center relative group-hover:brightness-95 transition-all">

@@ -73,6 +73,7 @@ export default function BidangPelatihanPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [currentBidang, setCurrentBidang] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const getDefaultBidangs = (title: string) => {
     const t = title.toLowerCase();
@@ -184,6 +185,8 @@ export default function BidangPelatihanPage() {
             </span>
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari Pelatihan" 
               className="pl-4 pr-10 py-2 border border-neutral-300 rounded-full text-xs w-64 focus:outline-none focus:border-[#0B2545]" 
             />
@@ -223,7 +226,7 @@ export default function BidangPelatihanPage() {
           <h3 className="text-[#0B2545] font-bold mb-4">Bidang Pelatihan</h3>
           
           <div className="flex flex-col gap-3">
-            {bidangs.map((bidang) => (
+            {bidangs.filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase())).map((bidang) => (
               <div key={bidang.id} className="bg-white border-2 border-[#0B2545] rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                 <span className="text-sm text-[#0B2545]">{bidang.name}</span>
                 <div className="flex items-center gap-3">

@@ -157,7 +157,7 @@ export default function CoachCoursePage() {
         {(() => {
           const filteredCourses = courses.filter(c => {
             const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.desc.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesProgram = programFilter === '' || programFilter === 'Filter by Program' ? true : c.program === programFilter;
+            const matchesProgram = programFilter === '' || programFilter === 'Filter by Program' ? true : c.program.toLowerCase() === programFilter.toLowerCase();
             return matchesSearch && matchesProgram;
           });
 

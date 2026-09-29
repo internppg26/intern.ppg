@@ -80,11 +80,12 @@ function ListCourseContent() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [currentCourse, setCurrentCourse] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-  const totalPages = Math.ceil(courses.length / itemsPerPage) || 1;
-  const paginatedCourses = courses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const filteredCourses = courses.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage) || 1;
+  const paginatedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Parse parent program name from localStorage for the API category tag
   const getParentProgramName = () => {
@@ -280,6 +281,8 @@ function ListCourseContent() {
             </span>
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari Course" 
               className="pl-4 pr-10 py-2 border border-neutral-300 rounded-full text-xs w-64 focus:outline-none focus:border-[#0B2545]" 
             />

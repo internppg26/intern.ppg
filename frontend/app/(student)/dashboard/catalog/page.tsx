@@ -68,7 +68,7 @@ export default function CourseCatalogPage() {
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory ? course.programName === selectedCategory : true;
+      const matchesCategory = selectedCategory ? course.programName.toLowerCase() === selectedCategory.toLowerCase() : true;
       return matchesSearch && matchesCategory;
     });
   }, [allCourses, searchTerm, selectedCategory]);
