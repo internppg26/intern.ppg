@@ -186,14 +186,35 @@ export default function CoachDashboardPage() {
                       <h4 className="font-bold text-[#0B2545] text-sm mb-1">{ev.title}</h4>
                       <p className="text-xs text-neutral-500">{ev.notes || ev.type}</p>
                     </div>
-                    {!isWorkshop ? (
-                      <button className="shrink-0 bg-[#0B2545] hover:bg-[#13325B] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line></svg>
-                        Join Meet
-                      </button>
-                    ) : (
+                    {ev.link ? (() => {
+                      const link = ev.link!;
+                      const isZoom = link.includes('zoom.us');
+                      const isMeet = link.includes('meet.google.com');
+                      const isMaps = link.includes('maps') || link.includes('goo.gl/maps');
+                      
+                      let text = 'Buka Tautan';
+                      let icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
+                      
+                      if (isZoom) {
+                        text = 'Join Zoom';
+                        icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line></svg>;
+                      } else if (isMeet) {
+                        text = 'Join Meet';
+                        icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="6" y1="12" x2="6" y2="12"></line><line x1="10" y1="12" x2="10" y2="12"></line></svg>;
+                      } else if (isMaps) {
+                        text = 'Buka Maps';
+                        icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+                      }
+                      
+                      return (
+                        <a href={link.startsWith('http') ? link : `https://${link}`} target="_blank" rel="noopener noreferrer" className="shrink-0 bg-[#0B2545] hover:bg-[#13325B] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-colors flex items-center gap-2">
+                          {icon}
+                          {text}
+                        </a>
+                      );
+                    })() : (
                       <span className="shrink-0 bg-neutral-100 text-neutral-500 px-5 py-2.5 rounded-full text-xs font-bold">
-                        Belum Dimulai
+                        Belum Ada Link
                       </span>
                     )}
                   </div>
